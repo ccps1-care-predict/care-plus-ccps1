@@ -1,15 +1,3 @@
-Perfeito — sendo para **apresentação inicial para empresa parceira da FIAP**, o ideal é:
-
-* 🔹 Clareza estratégica (não excessivamente técnico)
-* 🔹 Mostrar viabilidade
-* 🔹 Mostrar impacto
-* 🔹 Mostrar riscos e como vocês pretendem mitigar
-* 🔹 Deixar espaço para feedback
-
-Abaixo está uma versão em **Markdown estruturada no formato ideal para apresentação executiva inicial** (pode virar slide facilmente).
-
----
-
 # 🩺 Care Plus
 
 ## Totem Inteligente para Triagem Dermatológica com IA
@@ -113,46 +101,3 @@ Para início do projeto:
 * Modelo treinado para classificação básica (ex: benigno vs suspeito)
 * Interface simples no totem
 * Registro opcional com consentimento
-
----
-
-# 7️⃣ Principais Pontos para Feedback da Empresa
-
-Gostaríamos de orientação sobre:
-
-* ✔️ Viabilidade regulatória
-* ✔️ Validação clínica necessária
-* ✔️ Infraestrutura recomendada
-* ✔️ Possíveis parcerias médicas
-* ✔️ Escopo ideal para MVP
-* ✔️ Riscos jurídicos e mitigação
-
----
-
-# 8️⃣ Próximos Passos (Caso Aprovado)
-
-1. Refinamento de escopo
-2. Definição técnica detalhada
-3. Treinamento do modelo
-4. Prototipagem do hardware
-5. Testes controlados
-6. Iteração com base em feedback
-
----
-
-# 🎯 Objetivo da Reunião
-
-Apresentar a proposta, validar direcionamento técnico e estratégico, e alinhar expectativas para desenvolvimento conjunto.
-
----
-
-Se você quiser, posso agora:
-
-* 🔥 Transformar isso em roteiro de apresentação oral (o que cada um do grupo fala)
-* 🎤 Criar versão para pitch de 5 minutos
-* 📊 Gerar estrutura ideal de slides
-* 🧠 Adicionar camada mais técnica (para impressionar empresa tech)
-* ⚖️ Incluir análise de riscos e compliance (LGPD, ANVISA, responsabilidade médica)
-
-Me diz:
-A empresa parceira é mais **tech**, mais **hospitalar/saúde**, ou mais **corporativa/negócio**? Isso muda completamente o foco da apresentação.
