@@ -101,3 +101,10 @@ Para início do projeto:
 * Modelo treinado para classificação básica (ex: benigno vs suspeito)
 * Interface simples no totem
 * Registro opcional com consentimento
+
+Membros do grupo
+* Gabriel Drebtchinsky Quintaes de Carvalho (RM566729)
+* Ana Carolina Pereira Lopez (RM568401)
+* Danilo Roberto dos Santos (RM566966)
+* José Ribeiro dos Santos Neto (RM567692)
+* Henrique Fessel Trench (RM567513)
