@@ -1,43 +1,73 @@
-# 🏥 Diagrama de Caso de Uso Completo — CarePredict
+# 🏥 Diagrama de Caso de Uso — CarePredict (Versão Revisada)
 
-Sistema de medicina preventiva com Machine Learning proposto para a **Care Plus**.
+Sistema de medicina preventiva baseado em dados clínicos e epidemiológicos proposto para a **CarePlus**.
+
+O CarePredict utiliza:
+
+- dados clínicos do paciente
+- dados populacionais públicos
+- modelos de Machine Learning
+
+para prever riscos de saúde e recomendar exames preventivos.
 
 ---
 
 # 👥 Atores do Sistema
 
-### Paciente
+## Paciente
 
 Interage com a plataforma para:
 
-* visualizar recomendações de saúde
-* agendar consultas
-* agendar exames
-* acompanhar histórico clínico
+- visualizar recomendações preventivas
+- agendar consultas
+- agendar exames
+- acompanhar histórico de saúde
 
 ---
 
-### Médico
+## Médico
 
-* consulta histórico do paciente
-* recebe análises preditivas
-* realiza consulta
-* atualiza dados clínicos
+Utiliza o sistema para apoio clínico.
 
----
+Pode:
 
-### Administrador
-
-* gerencia usuários
-* monitora modelos de ML
-* supervisiona dados
+- acessar histórico do paciente
+- visualizar análises preditivas
+- realizar consultas
+- registrar diagnósticos
 
 ---
 
-### Sistema de Agenda Externo
+## Administrador
 
-* fornece disponibilidade de médicos
-* permite agendamento de exames e consultas
+Responsável por manter o sistema operacional.
+
+Pode:
+
+- gerenciar usuários
+- monitorar desempenho dos modelos
+- supervisionar qualidade dos dados
+
+---
+
+## Sistema de Agenda Externo
+
+Sistema responsável por:
+
+- fornecer horários disponíveis de médicos
+- permitir agendamento de exames e consultas
+
+---
+
+## Sistemas de Dados Públicos de Saúde
+
+Fontes externas utilizadas para enriquecer o modelo:
+
+- DATASUS
+- IBGE
+- ANS
+
+Esses dados ajudam a melhorar a análise de risco populacional.
 
 ---
 
@@ -46,13 +76,16 @@ Interage com a plataforma para:
 ```mermaid
 flowchart TB
 
-%% Atores
+%% ATORES
+
 Paciente((Paciente))
 Medico((Médico))
 Admin((Administrador))
 Agenda((Sistema de Agenda))
+DadosPublicos((Dados Públicos de Saúde))
 
-%% Sistema
+%% SISTEMA
+
 subgraph CarePredict
 
 UC1[Visualizar recomendações preventivas]
@@ -65,64 +98,77 @@ UC6[Receber análise preditiva]
 UC7[Realizar consulta]
 
 UC8[Analisar dados clínicos]
-UC9[Prever riscos de doenças]
-UC10[Gerar recomendações preventivas]
+UC9[Integrar dados epidemiológicos]
+UC10[Prever riscos de doenças]
+UC11[Gerar recomendações preventivas]
 
-UC11[Atualizar dados clínicos]
+UC12[Atualizar dados clínicos]
 
-UC12[Gerenciar usuários]
-UC13[Monitorar desempenho do modelo]
+UC13[Gerenciar usuários]
+UC14[Monitorar desempenho do modelo]
 
-UC14[Consultar disponibilidade de agenda]
+UC15[Consultar disponibilidade de agenda]
+UC16[Ingerir dados públicos de saúde]
 
 end
 
-%% Interações Paciente
+%% INTERAÇÕES PACIENTE
+
 Paciente --> UC1
 Paciente --> UC2
 Paciente --> UC3
 Paciente --> UC4
 
-%% Interações Médico
+%% INTERAÇÕES MÉDICO
+
 Medico --> UC5
 Medico --> UC6
 Medico --> UC7
 
-%% Interações Admin
-Admin --> UC12
+%% INTERAÇÕES ADMIN
+
 Admin --> UC13
+Admin --> UC14
 
-%% Sistema externo
-Agenda --> UC14
+%% SISTEMAS EXTERNOS
 
-%% Relações internas
-UC1 --> UC10
+Agenda --> UC15
+DadosPublicos --> UC16
+
+%% RELAÇÕES INTERNAS DO SISTEMA
+
+UC1 --> UC11
+UC11 --> UC10
+UC10 --> UC8
 UC10 --> UC9
-UC9 --> UC8
 
-UC2 --> UC14
-UC3 --> UC14
+UC2 --> UC15
+UC3 --> UC15
 
-UC7 --> UC11
+UC7 --> UC12
 UC5 --> UC4
-```
+
+UC16 --> UC9
+````
 
 ---
 
-# 🔄 Fluxo Principal do Sistema
+# 🔄 Fluxo Preventivo Principal
 
-### Fluxo preventivo
+Este é o fluxo central do CarePredict.
 
 ```
-Paciente entra no sistema
+Paciente acessa o sistema
         ↓
-CarePredict analisa dados clínicos
+CarePredict coleta dados clínicos
         ↓
-Modelo de ML calcula risco de doenças
+Sistema integra dados epidemiológicos públicos
+        ↓
+Modelo de Machine Learning calcula risco de doenças
         ↓
 Sistema gera recomendações preventivas
         ↓
-Paciente agenda exame ou consulta
+Paciente agenda exames ou consultas
 ```
 
 ---
@@ -132,13 +178,13 @@ Paciente agenda exame ou consulta
 ```
 Paciente agenda consulta
         ↓
-Médico acessa histórico consolidado
+Médico acessa histórico clínico consolidado
         ↓
-CarePredict mostra análise preditiva
+CarePredict apresenta análise preditiva
         ↓
 Consulta é realizada
         ↓
-Dados clínicos são atualizados
+Dados clínicos são atualizados no sistema
 ```
 
 ---
@@ -148,11 +194,24 @@ Dados clínicos são atualizados
 ```
 Dados clínicos do paciente
         ↓
+Integração com dados populacionais
+        ↓
 Análise de dados
         ↓
 Modelo preditivo
         ↓
 Cálculo de risco de doenças
         ↓
-Recomendação de exames e consultas
+Geração de recomendações preventivas
 ```
+
+---
+
+# 🧠 Objetivo do Sistema
+
+O CarePredict busca **identificar riscos de saúde antes que se tornem problemas clínicos graves**, permitindo:
+
+* diagnóstico precoce
+* aumento de exames preventivos
+* redução de internações evitáveis
+* diminuição de custos assistenciais da operadora
