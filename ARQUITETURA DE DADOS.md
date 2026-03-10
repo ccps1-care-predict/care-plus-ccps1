@@ -1,4 +1,20 @@
-# 🧠 Arquitetura de Dados Completa — CarePredict
+# 🧠 Arquitetura de Dados — CarePredict (Versão Revisada)
+
+Este documento descreve a arquitetura de dados do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
+
+A arquitetura integra:
+
+- dados clínicos individuais
+- dados epidemiológicos públicos
+- pipelines de processamento e feature engineering
+- modelos de Machine Learning
+- mecanismos de recomendação preventiva
+
+O objetivo é prever riscos de saúde e sugerir ações preventivas para os segurados.
+
+---
+
+# 📊 Diagrama da Arquitetura de Dados
 
 ```mermaid
 flowchart TB
@@ -8,12 +24,18 @@ flowchart TB
 %% ==============================
 
 subgraph DataSources["Fontes de Dados"]
+
 EHR[EHR / Prontuário Eletrônico]
 Lab[Laboratórios / Resultados de Exames]
 Hosp[Sistemas Hospitalares]
 Claims[Dados de Sinistro / Plano de Saúde]
-Wearables[Dispositivos de Saúde / Wearables]
+Wearables[Dispositivos de Saúde]
 App[Aplicativo do Paciente]
+
+DATASUS[DATASUS]
+IBGE[IBGE]
+ANS[ANS - Agência Nacional de Saúde]
+
 end
 
 %% ==============================
@@ -21,19 +43,35 @@ end
 %% ==============================
 
 subgraph Ingestion["Camada de Ingestão"]
+
 API[APIs Clínicas]
 Stream[Streaming de Eventos]
 Batch[ETL Batch]
+PublicAPI[Ingestão de Dados Públicos]
+
 end
 
 %% ==============================
-%% RAW DATA STORAGE
+%% DATA ANONYMIZATION
+%% ==============================
+
+subgraph Privacy["Camada de Privacidade"]
+
+Anonymization[Serviço de Anonimização de Dados]
+
+end
+
+%% ==============================
+%% DATA STORAGE
 %% ==============================
 
 subgraph DataLake["Data Lake"]
+
+PHI[(PHI Zone - Dados Sensíveis)]
 Raw[(Raw Data)]
 Processed[(Processed Data)]
 Curated[(Curated Data)]
+
 end
 
 %% ==============================
@@ -41,27 +79,33 @@ end
 %% ==============================
 
 subgraph Processing["Processamento de Dados"]
+
 ETL[ETL / ELT Pipeline]
 Cleaning[Data Cleaning]
 Enrichment[Data Enrichment]
+
 end
 
 %% ==============================
-%% ANALYTICS LAYER
+%% ANALYTICS
 %% ==============================
 
 subgraph Warehouse["Data Warehouse"]
+
 DW[(Clinical Analytics Warehouse)]
 BI[BI / Analytics Tools]
+
 end
 
 %% ==============================
-%% ML FEATURE LAYER
+%% FEATURE ENGINEERING
 %% ==============================
 
 subgraph FeatureLayer["Feature Engineering"]
+
 FeaturePipeline[Feature Engineering Pipeline]
 FeatureStore[(Feature Store)]
+
 end
 
 %% ==============================
@@ -69,9 +113,11 @@ end
 %% ==============================
 
 subgraph ML["Machine Learning Platform"]
+
 Training[Model Training]
 Validation[Model Validation]
 Registry[(Model Registry)]
+
 end
 
 %% ==============================
@@ -79,18 +125,23 @@ end
 %% ==============================
 
 subgraph Serving["ML Serving"]
+
 InferenceAPI[Prediction API]
+RiskEngine[Risk Scoring Engine]
 RecommendationEngine[Recommendation Engine]
+
 end
 
 %% ==============================
-%% APPLICATION LAYER
+%% APPLICATIONS
 %% ==============================
 
 subgraph Applications["Aplicações CarePredict"]
+
 PatientApp[Portal do Paciente]
 DoctorDashboard[Dashboard Médico]
 Scheduling[Serviço de Agendamento]
+
 end
 
 %% ==============================
@@ -98,9 +149,11 @@ end
 %% ==============================
 
 subgraph Monitoring["Monitoramento"]
+
 ModelMonitoring[Model Monitoring]
 DataQuality[Data Quality Checks]
 Logs[Observability / Logs]
+
 end
 
 %% ==============================
@@ -108,8 +161,10 @@ end
 %% ==============================
 
 subgraph Feedback["Feedback Clínico"]
+
 MedicalFeedback[Feedback do Médico]
-PatientOutcomes[Resultados de Saúde]
+PatientOutcomes[Resultados Clínicos]
+
 end
 
 %% ==============================
@@ -123,9 +178,17 @@ Claims --> Batch
 Wearables --> Stream
 App --> Stream
 
-API --> Raw
-Stream --> Raw
-Batch --> Raw
+DATASUS --> PublicAPI
+IBGE --> PublicAPI
+ANS --> PublicAPI
+
+API --> Anonymization
+Stream --> Anonymization
+Batch --> Anonymization
+PublicAPI --> Raw
+
+Anonymization --> PHI
+PHI --> Raw
 
 Raw --> ETL
 ETL --> Cleaning
@@ -146,7 +209,8 @@ Validation --> Registry
 
 Registry --> InferenceAPI
 
-InferenceAPI --> RecommendationEngine
+InferenceAPI --> RiskEngine
+RiskEngine --> RecommendationEngine
 
 RecommendationEngine --> PatientApp
 RecommendationEngine --> DoctorDashboard
@@ -158,7 +222,7 @@ InferenceAPI --> Logs
 
 MedicalFeedback --> FeaturePipeline
 PatientOutcomes --> FeaturePipeline
-```
+````
 
 ---
 
@@ -166,198 +230,250 @@ PatientOutcomes --> FeaturePipeline
 
 ## 1️⃣ Fontes de Dados
 
-Dados vêm de vários sistemas:
+O CarePredict utiliza dois grandes grupos de dados.
 
-* prontuário eletrônico (EHR)
-* laboratórios
-* sistemas hospitalares
-* dados de sinistros
+### Dados clínicos individuais
+
+* prontuários eletrônicos
+* exames laboratoriais
+* histórico hospitalar
+* dados de sinistros do plano
 * dispositivos de saúde
 * aplicativo do paciente
 
-Esses dados alimentam o sistema de prevenção.
+Esses dados representam o **histórico clínico do segurado**.
 
 ---
 
-# 2️⃣ Ingestão de Dados
+### Dados epidemiológicos públicos
 
-Dados entram por três formas:
+Dados populacionais utilizados para enriquecer os modelos.
+
+Principais fontes:
+
+* **DATASUS**
+* **IBGE**
+* **ANS**
+
+Esses dados ajudam a identificar:
+
+* incidência de doenças
+* fatores de risco populacionais
+* padrões demográficos
+
+---
+
+# 2️⃣ Camada de Ingestão
+
+Responsável por trazer dados para a plataforma.
+
+Métodos de ingestão:
 
 **APIs**
 
-* integração com sistemas clínicos
+integração com sistemas clínicos.
 
 **Streaming**
 
-* eventos do app
-* dados de wearables
+eventos em tempo real.
 
 **Batch**
 
-* dados históricos do plano de saúde
+dados históricos do plano.
+
+**Ingestão pública**
+
+dados epidemiológicos governamentais.
 
 ---
 
-# 3️⃣ Data Lake
+# 3️⃣ Camada de Privacidade
 
-Armazena dados em três níveis:
+Antes de armazenar dados no Data Lake, o sistema aplica:
 
-**Raw**
+* anonimização
+* pseudonimização
+* mascaramento de dados
 
-dados brutos.
+Isso garante conformidade com:
 
-**Processed**
+**LGPD (Lei Geral de Proteção de Dados)**.
+
+---
+
+# 4️⃣ Data Lake
+
+Estrutura principal de armazenamento.
+
+Camadas:
+
+### PHI Zone
+
+dados sensíveis identificáveis.
+
+### Raw
+
+dados brutos ingeridos.
+
+### Processed
 
 dados limpos.
 
-**Curated**
+### Curated
 
 dados preparados para analytics e ML.
 
 ---
 
-# 4️⃣ Processamento de Dados
+# 5️⃣ Processamento de Dados
 
-Pipeline responsável por:
+Pipeline responsável por preparar os dados.
+
+Etapas principais:
 
 * limpeza
 * normalização
 * enriquecimento clínico
 
-Exemplo:
+Exemplos de enriquecimento:
 
 * cálculo de IMC
 * agregação de histórico de exames
+* classificação de fatores de risco
 
 ---
 
-# 5️⃣ Data Warehouse
+# 6️⃣ Data Warehouse
 
-Camada usada para:
+Camada analítica utilizada para:
 
-* analytics
-* dashboards
-* relatórios médicos
+* dashboards médicos
+* análise populacional
+* análise de custos assistenciais
 
-Exemplo:
-
-* análise de população
-* incidência de doenças
-* custos assistenciais
+Ferramentas de BI podem consultar essa camada.
 
 ---
 
-# 6️⃣ Feature Engineering
+# 7️⃣ Feature Engineering
 
-Transforma dados clínicos em **features para ML**.
+Transforma dados clínicos em **features para Machine Learning**.
 
-Exemplo:
+Exemplos de features:
 
-| Feature                     | Descrição         |
-| --------------------------- | ----------------- |
-| idade                       | idade do paciente |
-| média glicemia              | média exames      |
-| histórico familiar diabetes | binário           |
-| IMC                         | calculado         |
+| Feature                     | Descrição                |
+| --------------------------- | ------------------------ |
+| idade                       | idade do paciente        |
+| média glicemia              | média de exames          |
+| IMC                         | índice de massa corporal |
+| histórico familiar diabetes | indicador binário        |
 
 ---
 
-# 7️⃣ Feature Store
+# 8️⃣ Feature Store
 
-Armazena features reutilizáveis.
+Armazena features reutilizáveis para ML.
 
 Benefícios:
 
 * consistência entre treino e produção
-* alta performance
-* reuso entre modelos
+* performance
+* reutilização entre modelos
 
 ---
 
-# 8️⃣ Machine Learning Platform
+# 9️⃣ Plataforma de Machine Learning
 
-Pipeline de ML:
+Pipeline de ML inclui:
 
-1️⃣ treinamento
-2️⃣ validação
-3️⃣ registro do modelo
+1. treinamento
+2. validação
+3. registro do modelo
 
-O **Model Registry** guarda:
+O **Model Registry** mantém:
 
-* versões
+* versões do modelo
 * métricas
-* datasets usados
+* datasets utilizados
 
 ---
 
-# 9️⃣ Serving / Predição
+# 🔟 Camada de Predição
 
-A **Prediction API** roda o modelo.
+A **Prediction API** executa os modelos em produção.
 
 Saída:
 
-```text
+```
 risco cardiovascular
 risco diabetes
 risco hipertensão
 ```
 
+Esses resultados alimentam o **Risk Scoring Engine**.
+
 ---
 
-# 🔟 Recommendation Engine
+# 11️⃣ Recommendation Engine
 
-Transforma previsões em ações:
+Transforma previsões em ações preventivas.
+
+Exemplos:
 
 * recomendar exames
 * recomendar consultas
-* priorizar pacientes
+* priorizar pacientes de risco
 
 ---
 
-# 11️⃣ Aplicações
+# 12️⃣ Aplicações
 
-Resultados aparecem em:
+Resultados são apresentados em:
 
-**Paciente**
+**Portal do paciente**
 
 * recomendações
-* agendamento
+* agendamento de exames
 
-**Médico**
+**Dashboard médico**
 
-* dashboard clínico
 * análise preditiva
+* histórico consolidado
 
 ---
 
-# 12️⃣ Monitoramento
+# 13️⃣ Monitoramento
 
-Sistemas de IA precisam monitorar:
+Plataformas de ML exigem monitoramento contínuo.
 
-* **model drift**
+O sistema acompanha:
+
+* model drift
 * qualidade de dados
-* erros de predição
+* performance das predições
 
 ---
 
-# 13️⃣ Feedback Loop
+# 14️⃣ Feedback Loop
 
-Sistema melhora com feedback:
+O sistema melhora continuamente com dados novos.
 
-* resultados clínicos reais
-* avaliação do médico
+Fontes de feedback:
+
+* resultados clínicos
+* diagnósticos médicos
 * evolução do paciente
 
-Isso permite **re-treinar os modelos continuamente**.
+Esses dados alimentam novos ciclos de treinamento do modelo.
 
 ---
 
-# 📊 Versão resumida (boa para slide)
+# 📊 Arquitetura Simplificada (boa para slide)
 
 ```mermaid
 flowchart LR
 
-A[Fontes de Dados Clínicos]
+A[Fontes Clínicas + Dados Públicos]
 B[Data Lake]
 C[Processamento de Dados]
 D[Feature Store]
