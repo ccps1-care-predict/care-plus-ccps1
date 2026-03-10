@@ -1,95 +1,171 @@
-# ☁️ Arquitetura Cloud — CarePredict (Azure)
+# ☁️ Arquitetura Cloud — CarePredict (Versão Revisada)
+
+Este documento descreve a arquitetura cloud do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
+
+A arquitetura foi projetada utilizando **Microsoft Azure** e segue princípios de:
+
+- escalabilidade
+- segurança de dados de saúde
+- governança de dados
+- MLOps
+
+---
+
+# 📊 Diagrama da Arquitetura Cloud
 
 ```mermaid
 flowchart TB
 
 %% USERS
-Paciente[Paciente App / Portal]
-Medico[Médico Dashboard]
-Admin[Administração]
+
+Paciente[Paciente - Portal/App]
+Medico[Médico - Dashboard]
+Admin[Administrador]
 
 %% FRONTEND
+
 subgraph Frontend
-WebApp[Azure App Service - Web App]
+
+WebApp[Azure App Service - Web Application]
+
 end
 
 %% API LAYER
+
 subgraph API
+
 APIM[Azure API Management]
-Backend[Backend API - Azure App Service]
-Auth[Azure Entra ID - Authentication]
+Backend[Backend CarePredict API]
+Auth[Azure Entra ID]
+
+end
+
+%% SECURITY
+
+subgraph Security
+
+KeyVault[Azure Key Vault]
+
 end
 
 %% DATA INGESTION
+
 subgraph Ingestion
+
 EventHub[Azure Event Hub]
 DataFactory[Azure Data Factory]
+PublicData[Ingestão de Dados Públicos]
+
+end
+
+%% PRIVACY
+
+subgraph Privacy
+
+Anonymization[Data Anonymization Service]
+
 end
 
 %% DATA STORAGE
+
 subgraph Storage
+
 DataLake[Azure Data Lake Storage Gen2]
 SQLDB[Azure SQL Database]
+
 end
 
 %% DATA PROCESSING
+
 subgraph Processing
+
 Databricks[Azure Databricks]
 Synapse[Azure Synapse Analytics]
+
 end
 
 %% FEATURE STORE
-subgraph MLFeatures
+
+subgraph FeatureLayer
+
 FeatureStore[Feature Store]
+
 end
 
 %% MACHINE LEARNING
+
 subgraph MachineLearning
-MLWorkspace[Azure Machine Learning Workspace]
+
+MLWorkspace[Azure Machine Learning]
 Training[Model Training]
 Registry[Model Registry]
 Inference[ML Inference Endpoint]
+
 end
 
 %% APPLICATION SERVICES
+
 subgraph Services
+
+RiskEngine[Risk Scoring Engine]
 Recommendation[Recommendation Engine]
 Scheduling[Scheduling Service]
+
 end
 
 %% MONITORING
+
 subgraph Observability
+
 Monitor[Azure Monitor]
 AppInsights[Application Insights]
+
 end
 
-%% FLOWS
+%% USERS
 
 Paciente --> WebApp
 Medico --> WebApp
 Admin --> WebApp
 
+%% FRONTEND → API
+
 WebApp --> APIM
 APIM --> Backend
 Backend --> Auth
 
+%% SECURITY
+
+Backend --> KeyVault
+Databricks --> KeyVault
+MLWorkspace --> KeyVault
+
+%% DATA FLOW
+
 Backend --> SQLDB
-Backend --> Inference
+
+%% EVENT STREAM
+
+Backend --> EventHub
 
 %% DATA INGESTION
 
-Backend --> EventHub
-EventHub --> DataLake
-DataFactory --> DataLake
+EventHub --> Anonymization
+PublicData --> DataFactory
+DataFactory --> Anonymization
+
+Anonymization --> DataLake
 
 %% DATA PROCESSING
 
 DataLake --> Databricks
 Databricks --> Synapse
 
+%% FEATURE ENGINEERING
+
 Synapse --> FeatureStore
 
-%% ML PIPELINE
+%% MACHINE LEARNING
 
 FeatureStore --> Training
 Training --> Registry
@@ -97,7 +173,10 @@ Registry --> Inference
 
 %% APPLICATION LOGIC
 
-Inference --> Recommendation
+Backend --> Inference
+Inference --> RiskEngine
+RiskEngine --> Recommendation
+
 Recommendation --> Scheduling
 
 Scheduling --> Backend
@@ -107,76 +186,109 @@ Scheduling --> Backend
 Backend --> AppInsights
 Inference --> Monitor
 Databricks --> Monitor
-```
+````
 
 ---
 
-# 🧩 Explicação da Arquitetura
+# 🧩 Explicação das Camadas
 
-## 1️⃣ Camada de Aplicação
+# 1️⃣ Camada de Aplicação
 
-Usuários acessam:
+Usuários acessam o sistema através de:
 
 * portal do paciente
-* dashboard do médico
+* dashboard médico
 * painel administrativo
 
 Hospedagem:
 
-* **Azure App Service**
+**Azure App Service**
 
 ---
 
 # 2️⃣ API Layer
 
-Gerencia acesso aos serviços.
+Gerencia comunicação entre frontend e backend.
 
 Componentes:
 
 **Azure API Management**
 
 * gateway de APIs
-* segurança
 * controle de acesso
+* rate limiting
 
-**Backend API**
+**Backend CarePredict API**
 
-* lógica do CarePredict
-* integração com ML
+* lógica de negócio
+* integração com serviços de ML
+* integração com sistemas externos
 
 **Azure Entra ID**
 
 * autenticação segura
+* controle de identidade
 
 ---
 
-# 3️⃣ Ingestão de Dados
+# 3️⃣ Segurança
 
-Entrada de dados clínicos.
+Dados de saúde exigem alto nível de segurança.
 
-**Azure Event Hub**
+O sistema utiliza:
 
-* streaming de eventos
+**Azure Key Vault**
+
+para armazenar:
+
+* segredos
+* credenciais
+* tokens de API
+* chaves de criptografia
+
+---
+
+# 4️⃣ Ingestão de Dados
+
+Dados entram no sistema por diferentes canais.
+
+**Event Hub**
+
+* ingestão de eventos
+* streaming de dados do sistema
 
 **Azure Data Factory**
 
 * pipelines ETL
+* ingestão de dados externos
 
-Exemplos de dados:
+**Dados Públicos**
 
-* exames
-* consultas
-* histórico clínico
+integração com:
+
+* DATASUS
+* IBGE
+* ANS
 
 ---
 
-# 4️⃣ Armazenamento
+# 5️⃣ Privacidade e LGPD
 
-**Azure Data Lake Storage Gen2**
+Antes de armazenar dados no Data Lake, o sistema aplica:
 
-armazenamento de dados clínicos e históricos.
+* anonimização
+* pseudonimização
+* mascaramento de dados sensíveis
 
-**Azure SQL Database**
+Isso garante conformidade com **LGPD**.
+
+---
+
+# 6️⃣ Armazenamento
+
+Dois tipos de armazenamento são utilizados.
+
+### Azure SQL Database
 
 dados transacionais:
 
@@ -187,61 +299,100 @@ dados transacionais:
 
 ---
 
-# 5️⃣ Processamento de Dados
+### Azure Data Lake Storage
+
+dados analíticos:
+
+* históricos clínicos
+* dados populacionais
+* datasets de ML
+
+---
+
+# 7️⃣ Processamento de Dados
 
 **Azure Databricks**
 
+responsável por:
+
 * processamento de dados
+* limpeza
 * feature engineering
 
 **Azure Synapse**
+
+utilizado para:
 
 * analytics
 * consultas analíticas
 
 ---
 
-# 6️⃣ Machine Learning
+# 8️⃣ Feature Store
 
-Pipeline de ML usando **Azure Machine Learning**.
+Armazena features utilizadas pelos modelos de Machine Learning.
+
+Benefícios:
+
+* consistência entre treino e produção
+* reutilização de features
+* melhor governança de ML
+
+---
+
+# 9️⃣ Plataforma de Machine Learning
+
+Implementada com **Azure Machine Learning**.
 
 Componentes:
 
-**Training**
+### Model Training
 
 treinamento dos modelos.
 
-**Model Registry**
+### Model Registry
 
 controle de versões.
 
-**Inference Endpoint**
+### Inference Endpoint
 
 API de predição em produção.
 
 ---
 
-# 7️⃣ Recommendation Engine
+# 🔟 Motor de Recomendação
 
-Transforma previsões em ações:
+Transforma previsões de risco em ações preventivas.
 
-* sugerir exames
-* recomendar consultas
-* priorizar pacientes
+Componentes:
+
+**Risk Engine**
+
+calcula scores de risco.
+
+**Recommendation Engine**
+
+gera recomendações como:
+
+* exames preventivos
+* consultas médicas
+* check-ups
 
 ---
 
-# 8️⃣ Scheduling Service
+# 11️⃣ Serviço de Agendamento
 
 Responsável por:
 
 * consultar agenda médica
-* agendar exames
 * agendar consultas
+* agendar exames
+
+Pode integrar com sistemas externos de agenda.
 
 ---
 
-# 9️⃣ Observabilidade
+# 12️⃣ Observabilidade
 
 Monitoramento do sistema.
 
@@ -249,31 +400,23 @@ Monitoramento do sistema.
 
 * métricas
 * logs
+* alertas
 
 **Application Insights**
 
-* performance das APIs
-* erros
+* monitoramento de APIs
+* performance da aplicação
 
 ---
 
-# 🔐 Segurança (Essencial em Saúde)
-
-Arquitetura deve incluir:
-
-* **Azure Key Vault** → segredos e chaves
-* **criptografia de dados**
-* **controle de acesso por RBAC**
-* **compliance LGPD**
-
----
-
-# 📊 Arquitetura Simplificada (boa para slide)
+# 📊 Arquitetura Simplificada (boa para slides)
 
 ```mermaid
 flowchart LR
 
-A[Paciente / Médico] --> B[Azure App Service]
+A[Paciente / Médico]
+
+A --> B[Azure App Service]
 
 B --> C[API Management]
 
@@ -281,7 +424,7 @@ C --> D[Backend CarePredict]
 
 D --> E[Azure SQL Database]
 
-D --> F[Azure ML - Prediction API]
+D --> F[Azure ML Inference]
 
 F --> G[Recommendation Engine]
 
