@@ -1,4 +1,15 @@
-# 🏥 Diagrama de Classes — CarePredict
+# 🏥 Diagrama de Classes — CarePredict (Versão Revisada)
+
+Este diagrama representa o modelo conceitual do sistema **CarePredict**, incluindo:
+
+- domínio clínico do paciente
+- componentes de inteligência artificial
+- recomendações preventivas
+- rastreabilidade dos modelos de Machine Learning
+
+---
+
+# 📊 Diagrama UML
 
 ```mermaid
 classDiagram
@@ -14,7 +25,6 @@ class Usuario {
 class Paciente {
   +dataNascimento: Date
   +genero: String
-  +historicoFamiliar: String
   +altura: Float
   +peso: Float
 }
@@ -22,6 +32,13 @@ class Paciente {
 class Medico {
   +crm: String
   +especialidade: String
+}
+
+class PerfilClinico {
+  +idade: Int
+  +imc: Float
+  +historicoFamiliar: String
+  +fatoresRisco: String
 }
 
 class Consulta {
@@ -33,16 +50,18 @@ class Consulta {
 
 class Exame {
   +id: UUID
-  +tipo: String
+  +tipo: TipoExame
   +data: Date
   +resultado: String
 }
 
-class Recomendacao {
-  +id: UUID
-  +tipo: String
-  +descricao: String
-  +prioridade: String
+class TipoExame {
+  <<enumeration>>
+  Hemograma
+  Glicemia
+  PerfilLipidico
+  Eletrocardiograma
+  Ultrassom
 }
 
 class PredicaoRisco {
@@ -50,6 +69,20 @@ class PredicaoRisco {
   +doenca: String
   +probabilidade: Float
   +dataAnalise: Date
+}
+
+class HealthScore {
+  +valor: Float
+  +dataCalculo: Date
+}
+
+class Recomendacao {
+  +id: UUID
+  +tipo: String
+  +descricao: String
+  +prioridade: String
+  +origem: String
+  +explicacao: String
 }
 
 class ModeloML {
@@ -68,68 +101,86 @@ class Agenda {
 Usuario <|-- Paciente
 Usuario <|-- Medico
 
+Paciente "1" --> "1" PerfilClinico
 Paciente "1" --> "*" Consulta
 Paciente "1" --> "*" Exame
-Paciente "1" --> "*" Recomendacao
 Paciente "1" --> "*" PredicaoRisco
+Paciente "1" --> "*" Recomendacao
+Paciente "1" --> "1" HealthScore
 
 Medico "1" --> "*" Consulta
 
-Consulta "1" --> "0..*" Exame
+Consulta --> Agenda
+Consulta --> "0..*" Exame
 
 PredicaoRisco --> ModeloML
 
-Consulta --> Agenda
-```
+Recomendacao --> PredicaoRisco
+````
 
 ---
 
 # 🧠 Explicação das Classes
 
-## 👤 Usuario (classe base)
+## 👤 Usuario
 
-Classe genérica para autenticação.
+Classe base utilizada para autenticação e identificação no sistema.
 
 Atributos:
 
 * id
 * nome
 * email
-* senha
+* senhaHash
+* tipo de usuário
 
 Especializações:
 
-* **Paciente**
-* **Medico**
+* Paciente
+* Médico
 
 ---
 
-# 🧑‍⚕️ Paciente
+# 🧑 Paciente
 
-Representa o segurado do plano.
+Representa o segurado do plano de saúde.
 
-Dados importantes para ML:
+Atributos principais:
 
-* idade
+* data de nascimento
 * gênero
-* histórico familiar
 * altura
 * peso
 
 Relacionamentos:
 
-Paciente pode ter:
+* possui um perfil clínico
+* possui consultas médicas
+* possui exames realizados
+* recebe recomendações preventivas
+* possui análises de risco
+* possui um score de saúde
 
-* várias consultas
-* vários exames
-* várias predições de risco
-* várias recomendações
+---
+
+# 🧠 PerfilClinico
+
+Representa um **resumo clínico estruturado do paciente**, utilizado pelos modelos de Machine Learning.
+
+Atributos importantes:
+
+* idade
+* IMC
+* histórico familiar
+* fatores de risco
+
+Essa classe representa a **camada de feature engineering no domínio clínico**.
 
 ---
 
 # 👨‍⚕️ Medico
 
-Representa o profissional de saúde.
+Representa profissionais de saúde.
 
 Atributos:
 
@@ -138,7 +189,7 @@ Atributos:
 
 Relacionamento:
 
-* médico realiza várias consultas.
+* médico realiza consultas.
 
 ---
 
@@ -146,7 +197,7 @@ Relacionamento:
 
 Representa uma consulta médica.
 
-Contém:
+Atributos:
 
 * data
 * diagnóstico
@@ -154,9 +205,9 @@ Contém:
 
 Relacionamentos:
 
-* consulta pertence a **um paciente**
-* consulta é realizada por **um médico**
-* consulta pode gerar **exames**
+* associada a um paciente
+* realizada por um médico
+* pode gerar exames
 
 ---
 
@@ -172,14 +223,14 @@ Atributos:
 
 Relacionamentos:
 
-* associado a consultas
-* associado ao paciente
+* associado a um paciente
+* pode estar ligado a uma consulta médica.
 
 ---
 
-# 🤖 PredicaoRisco
+# 🧬 PredicaoRisco
 
-Representa a análise de risco gerada pelo ML.
+Representa uma previsão gerada por um modelo de Machine Learning.
 
 Exemplo:
 
@@ -195,35 +246,59 @@ Relacionamentos:
 
 ---
 
-# 🧠 ModeloML
+# 📊 HealthScore
 
-Representa o modelo de machine learning.
+Indicador geral de risco do paciente.
 
-Atributos:
+Exemplo:
 
-* versão do modelo
-* data de treinamento
-* nome do modelo
+```
+HealthScore: 64 / 100
+```
 
-Serve para **rastreabilidade e auditoria do modelo**.
+Esse score é calculado considerando:
+
+* histórico clínico
+* exames
+* predições de risco
+* fatores populacionais
+
+Ele ajuda o sistema a **priorizar pacientes para ações preventivas**.
 
 ---
 
 # 📋 Recomendacao
 
-Representa sugestões do sistema.
+Representa sugestões geradas pelo sistema.
 
 Exemplos:
 
-* exame de colesterol
+* exame de glicemia
+* perfil lipídico
 * consulta cardiológica
 * check-up anual
 
+Atributos importantes:
+
+* prioridade
+* origem da recomendação
+* explicação da decisão
+
+Isso permite **explicabilidade da IA (Explainable AI)**.
+
+---
+
+# 🤖 ModeloML
+
+Representa o modelo de Machine Learning utilizado pelo sistema.
+
 Atributos:
 
-* tipo
-* prioridade
-* descrição
+* nome do modelo
+* versão
+* data de treinamento
+
+Serve para **auditoria e rastreabilidade do modelo**.
 
 ---
 
@@ -236,9 +311,7 @@ Atributos:
 * data e hora
 * disponibilidade
 
-Relacionamento:
-
-* usado para agendar consultas.
+Usado pelo sistema de agendamento.
 
 ---
 
@@ -247,13 +320,16 @@ Relacionamento:
 ```mermaid
 classDiagram
 
+Paciente --> PerfilClinico
 Paciente --> Consulta
 Paciente --> Exame
 Paciente --> PredicaoRisco
 Paciente --> Recomendacao
+Paciente --> HealthScore
 
 Consulta --> Medico
 Consulta --> Exame
 
 PredicaoRisco --> ModeloML
+Recomendacao --> PredicaoRisco
 ```
