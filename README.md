@@ -11,6 +11,7 @@ O CarePredict analisa dados clínicos e epidemiológicos para estimar riscos de 
 - [Objetivos](#objetivos)
 - [Escopo Funcional (MVP)](#escopo-funcional-mvp)
 - [Arquitetura da Solução](#arquitetura-da-solucao)
+- [Arquitetura MVP Local (Docker)](#arquitetura-mvp-local-docker)
 - [Arquitetura de Dados](#arquitetura-de-dados)
 - [Fluxos do Sistema](#fluxos-do-sistema)
 - [Modelo de Domínio (UML)](#modelo-de-dominio-uml)
@@ -91,6 +92,19 @@ Principais componentes:
 - Azure Monitor + Application Insights (observabilidade)
 
 Documento completo: [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
+
+## Arquitetura MVP Local (Docker)
+
+Para acelerar validacoes tecnicas e funcionais, o projeto tambem possui uma arquitetura de MVP local baseada em Docker Compose.
+
+Essa versao contempla:
+
+- frontend Angular, backend API e servicos de recomendacao
+- inferencia de ML local
+- persistencia com Postgres, MinIO e Redis
+- fluxo ponta a ponta sem dependencia inicial de cloud publica
+
+Documento completo: [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
 
 ## Arquitetura de Dados
 
@@ -181,6 +195,7 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 - [README.md](README.md)
 - [PROPOSTA.md](PROPOSTA.md)
 - [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
+- [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
 - [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)
 - [DIAGRAMA DE CASO DE USO.md](DIAGRAMA%20DE%20CASO%20DE%20USO.md)
 - [DIAGRAMA DE CLASSE.md](DIAGRAMA%20DE%20CLASSE.md)
