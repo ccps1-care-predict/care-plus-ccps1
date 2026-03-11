@@ -212,7 +212,7 @@ Transforma dados clínicos em **insights preditivos**.
 
 ### Frontend
 
-* React
+* Angular
 
 ---
 

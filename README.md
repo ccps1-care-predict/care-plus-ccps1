@@ -161,7 +161,7 @@ Baseado na proposta técnica do projeto:
 - ML: Scikit-learn, TensorFlow ou PyTorch
 - Dados: PostgreSQL (camada transacional) + Data Lake
 - Processamento: Pandas e pipelines de dados
-- Frontend: React
+- Frontend: Angular
 - Cloud (arquitetura alvo): Microsoft Azure
 
 Documento de referência: [PROPOSTA.md](PROPOSTA.md)
