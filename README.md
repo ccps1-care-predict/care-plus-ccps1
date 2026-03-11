@@ -1,274 +1,211 @@
-# 📊 Proposta de Projeto
+# CarePredict - Sistema de Medicina Preventiva com Machine Learning
 
-## Sistema de Agendamento Preventivo Inteligente com Machine Learning
+Projeto acadêmico para a Care Plus com foco em medicina preventiva orientada por dados.
 
----
+O CarePredict analisa dados clínicos e epidemiológicos para estimar riscos de saúde, gerar recomendações preventivas e apoiar o agendamento de consultas e exames.
 
-# 1️⃣ Problema
+## Sumário
 
-Planos de saúde enfrentam um problema recorrente:
+- [Visão do Projeto](#visao-do-projeto)
+- [Problema e Oportunidade](#problema-e-oportunidade)
+- [Objetivos](#objetivos)
+- [Escopo Funcional (MVP)](#escopo-funcional-mvp)
+- [Arquitetura da Solução](#arquitetura-da-solucao)
+- [Arquitetura de Dados](#arquitetura-de-dados)
+- [Fluxos do Sistema](#fluxos-do-sistema)
+- [Modelo de Domínio (UML)](#modelo-de-dominio-uml)
+- [Planejamento por Épicos e Sprints](#planejamento-por-epicos-e-sprints)
+- [Tecnologias Propostas](#tecnologias-propostas)
+- [Segurança, Privacidade e Compliance](#seguranca-privacidade-e-compliance)
+- [Estrutura do Repositório](#estrutura-do-repositorio)
+- [Status do Projeto](#status-do-projeto)
+- [Equipe](#equipe)
+- [Licença](#licenca)
 
-* Muitos pacientes **procuram atendimento apenas quando a doença já está avançada**.
-* Isso resulta em:
+## Visao do Projeto
 
-  * tratamentos mais complexos
-  * maior custo hospitalar
-  * maior risco ao paciente
+O CarePredict foi concebido para atuar de forma preventiva na jornada de saúde dos segurados, combinando:
 
-Além disso:
+- dados clínicos individuais
+- dados populacionais públicos (DATASUS, IBGE e ANS)
+- modelos de Machine Learning para risco de doenças
+- motor de recomendação preventiva
 
-* exames preventivos são **subutilizados**
-* consultas preventivas são **mal distribuídas**
-* dados clínicos existentes **não são explorados de forma preditiva**
+Resultado esperado:
 
-Para empresas como a **Care Plus**, isso gera **aumento significativo nos custos assistenciais**.
+- mais diagnóstico precoce
+- melhor acompanhamento clínico
+- redução de custos assistenciais evitáveis
 
----
+## Problema e Oportunidade
 
-# 2️⃣ Objetivo do Projeto
+No cenário atual, muitos pacientes procuram atendimento apenas quando a condição de saúde já está avançada. Isso aumenta o custo assistencial e reduz a efetividade da prevenção.
 
-Desenvolver um **sistema inteligente de medicina preventiva** que utilize **Machine Learning** para:
+O projeto endereça esse problema com uma abordagem de apoio à decisão médica e recomendação preventiva, evitando posicionamento regulatório de "diagnóstico automatizado".
 
-* prever possíveis riscos de saúde
-* recomendar exames preventivos
-* sugerir consultas médicas antecipadamente
-* automatizar o agendamento dessas consultas/exames
+## Objetivos
 
-O sistema tem como objetivo:
+- prever riscos de saúde com base em histórico clínico e contexto populacional
+- recomendar exames preventivos e consultas com especialistas
+- apoiar o médico com visão consolidada e preditiva do paciente
+- permitir integração com agenda externa para agendamentos
 
-* **melhorar a saúde do paciente**
-* **reduzir custos com tratamentos tardios**
-* **auxiliar médicos com uma anamnese baseada em dados**
-
----
-
-# 3️⃣ Solução Proposta
-
-A solução consiste em uma plataforma que analisa:
-
-* histórico médico do paciente
-* exames anteriores
-* idade
-* gênero
-* histórico familiar
-* padrões populacionais de doenças
-
-Utilizando modelos de **Machine Learning**, o sistema poderá:
-
-1️⃣ Identificar **riscos de doenças futuras**
-2️⃣ Recomendar **check-ups preventivos**
-3️⃣ Sugerir **consultas com especialistas**
-4️⃣ Automatizar o **agendamento inteligente**
-
-Isso cria um **ciclo de medicina preventiva orientado por dados**.
-
----
-
-# 4️⃣ Fluxo da Solução
-
-### Etapa 1 — Coleta de dados
-
-Dados do paciente:
-
-* histórico de consultas
-* exames realizados
-* diagnósticos anteriores
-* idade
-* sexo
-* hábitos (se disponível)
-
----
-
-### Etapa 2 — Análise por Machine Learning
-
-Modelos preditivos analisam padrões para prever:
-
-* risco cardiovascular
-* risco metabólico (diabetes)
-* problemas hormonais
-* doenças crônicas
-
----
-
-### Etapa 3 — Recomendações
-
-O sistema gera recomendações como:
-
-* exames preventivos
-* consultas com especialistas
-* acompanhamento periódico
-
----
-
-### Etapa 4 — Agendamento automático
-
-O sistema pode:
-
-* sugerir datas disponíveis
-* priorizar especialistas relevantes
-* integrar com agenda médica
-
----
-
-### Etapa 5 — Apoio ao médico
-
-Antes da consulta o médico recebe:
-
-* resumo clínico
-* histórico relevante
-* possíveis riscos detectados
-* exames recomendados
-
-Isso ajuda a construir uma **anamnese mais completa e eficiente**.
-
----
-
-# 5️⃣ Benefícios para a Care Plus
-
-### 💰 Redução de custos
-
-Tratamento preventivo é **muito mais barato** que tratamento tardio.
-
-Exemplo:
-
-| Condição    | Preventivo     | Tardio                         |
-| ----------- | -------------- | ------------------------------ |
-| Diabetes    | acompanhamento | complicações hospitalares      |
-| Hipertensão | controle       | AVC ou infarto                 |
-| Câncer      | rastreamento   | tratamento oncológico complexo |
-
----
-
-### 🧑‍⚕️ Melhor qualidade de atendimento
-
-* médicos mais bem informados
-* diagnósticos mais rápidos
-* acompanhamento contínuo
-
----
-
-### 📈 Uso inteligente de dados
-
-Transforma dados clínicos em **insights preditivos**.
-
----
-
-### ❤️ Melhora na saúde dos segurados
-
-* diagnóstico precoce
-* prevenção de doenças
-* maior qualidade de vida
-
----
-
-# 6️⃣ Funcionalidades do Sistema (MVP)
+## Escopo Funcional (MVP)
 
 ### Paciente
 
-* dashboard de saúde
-* recomendações preventivas
-* agendamento automático
-* lembretes de exames
-
----
+- dashboard de saúde
+- visualização de recomendações preventivas
+- agendamento de consultas e exames
+- acompanhamento de histórico
 
 ### Médico
 
-* painel clínico do paciente
-* resumo preditivo de risco
-* histórico organizado
+- dashboard clínico do paciente
+- acesso a análise preditiva de risco
+- suporte à anamnese orientada por dados
+- registro de diagnóstico
 
----
+### Plataforma
 
-### Sistema
+- ingestão de dados clínicos e dados públicos
+- pipeline de anonimização (LGPD)
+- processamento, feature engineering e feature store
+- inferência de risco e recommendation engine
+- monitoramento de aplicação e modelos
 
-* motor de Machine Learning
-* recomendação de exames
-* priorização de consultas
-* integração com agendas
+## Arquitetura da Solução
 
----
+A arquitetura cloud foi desenhada em Azure, com separação de camadas para aplicação, ingestão, armazenamento, processamento, ML e observabilidade.
 
-# 7️⃣ Tecnologias Possíveis
+Principais componentes:
 
-### Backend
+- Azure App Service (portal/dashboard)
+- Azure API Management + Backend API
+- Azure Entra ID (autenticação)
+- Azure Key Vault (segredos e chaves)
+- Event Hub + Data Factory (ingestão)
+- Data Lake + Azure SQL Database (armazenamento)
+- Databricks + Synapse (processamento analítico)
+- Azure Machine Learning (treino, registro e inferência)
+- Azure Monitor + Application Insights (observabilidade)
 
-* Python
-* FastAPI
+Documento completo: [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
 
-### Machine Learning
+## Arquitetura de Dados
 
-* Scikit-learn
-* TensorFlow / PyTorch
+A arquitetura de dados contempla:
 
-### Banco de dados
+- fontes clínicas (EHR, laboratório, hospital, sinistro, wearables, app)
+- fontes públicas (DATASUS, IBGE, ANS)
+- camada de privacidade com anonimização/pseudonimização
+- Data Lake por zonas (PHI, Raw, Processed, Curated)
+- camada analítica (warehouse/BI)
+- feature engineering + feature store
+- ciclo de ML com treino, validação, registry e serving
+- feedback clínico para melhoria contínua
 
-* PostgreSQL
+Documento completo: [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)
 
-### Processamento de dados
+## Fluxos do Sistema
 
-* Pandas
-* pipelines de dados
+Fluxos principais modelados:
 
-### Frontend
+- análise de risco e geração de recomendações
+- agendamento de consulta
+- agendamento de exames
+- consulta médica com apoio da IA
+- treinamento e atualização de modelo
 
-* React
+Documento completo: [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
 
----
+## Modelo de Domínio (UML)
 
-# 8️⃣ Diferencial do Projeto
+Classes centrais:
 
-O diferencial da solução está em:
+- Usuario, Paciente, Medico
+- PerfilClinico, Consulta, Exame, Agenda
+- PredicaoRisco, HealthScore, Recomendacao
+- ModeloML
 
-* **uso proativo de dados clínicos**
-* **agendamento automatizado baseado em risco**
-* **apoio à decisão médica com IA**
+Documento completo: [DIAGRAMA DE CLASSE.md](DIAGRAMA%20DE%20CLASSE.md)
 
-Em vez de reagir à doença, o sistema **atua preventivamente**.
+## Planejamento por Épicos e Sprints
 
----
+Épicos definidos:
 
-# 9️⃣ Impacto Esperado
+1. Fundação da Plataforma
+2. Ingestão de Dados
+3. Processamento de Dados
+4. Machine Learning
+5. Motor de Recomendação
+6. Aplicações
+7. Observabilidade
 
-Para a **Care Plus**:
+Sprints planejadas com estimativas de Story Points:
 
-* redução de custos assistenciais
-* maior eficiência operacional
-* diferencial competitivo
+- Sprint 1: ~18 SP
+- Sprint 2: ~18 SP
+- Sprint 3: ~21 SP
+- Sprint 4: ~26 SP
+- Sprint 5: ~18 SP
+- Sprint 6: ~19 SP
 
-Para pacientes:
+Documento completo: [esboço de epicos.md](esbo%C3%A7o%20de%20epicos.md)
 
-* mais prevenção
-* melhor acompanhamento
-* melhor qualidade de vida
+## Tecnologias Propostas
 
----
+Baseado na proposta técnica do projeto:
 
-💡 **Uma dica MUITO importante para apresentação:**
-Evitem vender como **“IA que diagnostica doenças”**, porque isso gera problemas regulatórios.
+- Backend: Python + FastAPI
+- ML: Scikit-learn, TensorFlow ou PyTorch
+- Dados: PostgreSQL (camada transacional) + Data Lake
+- Processamento: Pandas e pipelines de dados
+- Frontend: React
+- Cloud (arquitetura alvo): Microsoft Azure
 
-Vendam como:
+Documento de referência: [PROPOSTA.md](PROPOSTA.md)
 
-> **Sistema de recomendação preventiva e apoio à decisão médica**
+## Segurança, Privacidade e Compliance
 
-Isso é **muito mais seguro juridicamente**.
+- proteção de dados sensíveis com segregação por zonas de dados
+- anonimização, pseudonimização e mascaramento antes da análise
+- gestão de segredos com Key Vault
+- controle de acesso com Entra ID e RBAC
+- direcionamento de uso como apoio à decisão médica, não diagnóstico automatizado
 
----
+## Estrutura do Repositório
 
-Se quiser, posso também te ajudar com algo que **vai elevar MUITO o nível da apresentação**:
+Este repositório, neste estágio, concentra documentação de produto e arquitetura:
 
-* 🎯 **Nome profissional para o sistema**
-* 🧠 **Arquitetura de IA (como o ML realmente funcionaria)**
-* 📊 **Diagrama do sistema**
-* 🧩 **Arquitetura técnica**
-* 📈 **Slides prontos para apresentação**
+- [README.md](README.md)
+- [PROPOSTA.md](PROPOSTA.md)
+- [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
+- [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)
+- [DIAGRAMA DE CASO DE USO.md](DIAGRAMA%20DE%20CASO%20DE%20USO.md)
+- [DIAGRAMA DE CLASSE.md](DIAGRAMA%20DE%20CLASSE.md)
+- [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
+- [esboço de epicos.md](esbo%C3%A7o%20de%20epicos.md)
 
-Inclusive dá para transformar essa ideia em algo que **parece projeto de startup real**.
+## Status do Projeto
 
-Membros do grupo
+Status atual: Planejamento e definição de arquitetura.
 
-* Gabriel Drebtchinsky Quintaes de Carvalho (RM566729)
-* Ana Carolina Pereira Lopez (RM568401)
-* Danilo Roberto dos Santos (RM566966)
-* José Ribeiro dos Santos Neto (RM567692)
-* Henrique Fessel Trench (RM567513)
+Próximos passos sugeridos:
+
+1. criar estrutura inicial do backend
+2. provisionar infraestrutura mínima em cloud
+3. implementar pipeline inicial de ingestão e anonimização
+4. disponibilizar primeira versão de API de recomendação
+
+## Equipe
+
+- Gabriel Drebtchinsky Q. de Carvalho (RM566729)
+- Ana Carolina Pereira Lopez (RM568401)
+- Danilo Roberto dos Santos (RM566966)
+- José Ribeiro dos Santos Neto (RM567692)
+- Henrique Fessel Trench (RM567513)
+
+## Licenca
+
+Distribuído sob a licença definida em [LICENSE](LICENSE).
