@@ -2,222 +2,185 @@
 
 ## 1. Visão geral do mercado de saúde digital
 
-A área de **saúde digital (Digital Health)** vem crescendo rapidamente com a adoção de tecnologias como telemedicina, monitoramento remoto de pacientes, análise de dados clínicos e dispositivos vestíveis.
+O setor de saúde digital vive expansão acelerada devido à adoção de tecnologias como telemedicina, monitoramento remoto de pacientes (RPM) e analytics de dados clínicos. Essas soluções ampliam o acesso aos serviços de saúde, melhoram o acompanhamento de pacientes e ajudam a reduzir custos hospitalares.
 
-Essas tecnologias permitem ampliar o acesso à saúde, melhorar o acompanhamento de pacientes e reduzir custos hospitalares.
+Fatores que impulsionam esse crescimento:
 
-Segundo a World Health Organization, a transformação digital na saúde tem potencial para fortalecer sistemas de saúde e ampliar o acesso a serviços médicos de qualidade.
+* envelhecimento populacional
+* aumento das doenças crônicas
+* pressão por eficiência nos sistemas de saúde
+* aceleração da telemedicina após a pandemia de COVID-19
 
-Entre os principais fatores que impulsionam esse crescimento estão:
-
-* envelhecimento da população
-* aumento da prevalência de doenças crônicas
-* necessidade de redução de custos hospitalares
-* expansão da telemedicina após a pandemia de COVID-19
+Dados oficiais reforçam essa tendência no Brasil: os atendimentos remotos saltaram de **200 mil em 2020 para 3,1 milhões em 2025**, demonstrando adoção exponencial dessas tecnologias.
 
 Referência:
-[https://www.who.int/health-topics/digital-health](https://www.who.int/health-topics/digital-health)
+[Serasa Experian — Painel de Saúde Digital Brasil](https://www.serasaexperian.com.br/sala-de-imprensa/institucional/brasil-ganha-primeiro-painel-publico-de-indicadores-da-saude-digital-com-parceria-inedita-entre-saude-digital-brasil-sdb-e-serasa-experian/)
 
 ---
 
-# 2. Tamanho do mercado global de saúde digital
+## 2. Tamanho do mercado global de saúde digital
 
-O mercado global de saúde digital apresenta forte crescimento nos últimos anos.
+O mercado global de saúde digital está em forte expansão. Segundo a StartUs Insights (baseado em Grand View Research):
 
-De acordo com a Grand View Research:
+* O mercado mundial de saúde digital atingiu cerca de **US$ 288,6 bilhões em 2024**
+* Deve chegar a **US$ 946,0 bilhões em 2030** — aproximando-se de US$ 1 trilhão
+* Crescimento médio anual de **22,2%** entre 2025 e 2030
 
-* O mercado global de Digital Health foi estimado em **US$ 288 bilhões em 2022**
-* A expectativa é alcançar **mais de US$ 650 bilhões até 2030**
-* Crescimento médio anual estimado de **18%**
+Esse valor abrange diversos segmentos: telemedicina, wearables, aplicativos de saúde, entre outros.
 
-Esse crescimento está associado ao aumento da digitalização dos sistemas de saúde e à adoção de novas tecnologias para monitoramento e prevenção de doenças.
+O **monitoramento remoto de pacientes (RPM)** destaca-se como subsegmento de crescimento ainda mais rápido. Segundo a MarketsandMarkets:
 
-Referência:
-[https://www.grandviewresearch.com/industry-analysis/digital-health-market](https://www.grandviewresearch.com/industry-analysis/digital-health-market)
+* Mercado global de RPM era de **US$ 27,7 bilhões em 2024**
+* Deve atingir cerca de **US$ 56,9 bilhões em 2030**, crescendo a **12,7% ao ano**
 
----
+A expansão do RPM é impulsionada pelo aumento de doenças crônicas e pela busca de cuidados domiciliares eficientes. Dispositivos conectados permitem acompanhar sinais vitais (pressão arterial, glicemia, sono etc.) sem necessidade de internações.
 
-# 3. Mercado de monitoramento remoto de pacientes
-
-O **monitoramento remoto de pacientes (Remote Patient Monitoring – RPM)** permite acompanhar pacientes fora do ambiente hospitalar utilizando dispositivos conectados e plataformas digitais.
-
-Esse tipo de solução possibilita coletar dados como:
-
-* pressão arterial
-* frequência cardíaca
-* níveis de glicose
-* atividade física
-* qualidade do sono
-
-Segundo a Markets and Markets:
-
-* O mercado global de monitoramento remoto de pacientes deve atingir **US$ 175 bilhões até 2027**
-* Crescimento anual médio estimado de aproximadamente **26%**
-
-Esse crescimento é impulsionado pela necessidade de reduzir internações hospitalares e melhorar o acompanhamento de pacientes com doenças crônicas.
-
-Referência:
-[https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-168265922.html](https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-168265922.html)
+Referências:
+[StartUs Insights — Digital Health Market Report 2026](https://www.startus-insights.com/innovators-guide/digital-health-market-report/)
+[MarketsandMarkets — Remote Patient Monitoring Market](https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-77155492.html)
 
 ---
 
-# 4. Mercado de saúde no Brasil
+## 3. Mercado de saúde digital no Brasil
 
-O Brasil possui um dos maiores sistemas de saúde do mundo, composto pelo **Sistema Único de Saúde (SUS)** e pelo setor de saúde suplementar.
+O Brasil tem forte potencial para soluções de saúde digital e preventiva. Segundo o IMARC Group:
 
-Segundo dados da Agência Nacional de Saúde Suplementar (ANS):
+* O mercado brasileiro de saúde digital atingiu **US$ 12,4 bilhões em 2025**
+* Pode chegar a **US$ 44,6 bilhões em 2034**
+* CAGR estimado de **15,3%** entre 2026 e 2034
 
-* Mais de **50 milhões de brasileiros possuem planos de saúde privados**
+Esse crescimento é impulsionado pelo aumento do acesso à internet (mais de 92% das residências conectadas em 2023) e por iniciativas governamentais de telemedicina.
 
-Isso representa uma parcela significativa da população que pode ser atendida por soluções digitais voltadas à gestão e prevenção de doenças.
+O Brasil também possui um grande setor privado de saúde:
 
-Referência:
-[https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-gerais](https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-gerais)
+* Em dezembro de 2023, havia **51 milhões de beneficiários em planos de assistência médica** — cerca de um quarto da população
+* Esse mercado de saúde suplementar representa oportunidade direta para tecnologias preventivas, pois operadoras buscam reduzir custos evitando internações
+
+Referências:
+[IMARC Group — Mercado de Saúde Digital do Brasil](https://www.imarcgroup.com/report/pt-br/brazil-digital-health-market)
+[ANS — Setor fecha 2023 com 51 milhões de beneficiários](https://www.gov.br/ans/pt-br/assuntos/noticias/numeros-do-setor/setor-fecha-2023-com-51-milhoes-de-beneficiarios-em-planos-de-assistencia-medica)
 
 ---
 
-# 5. Impacto das doenças crônicas no Brasil
+## 4. Impacto das doenças crônicas no Brasil
 
-As **Doenças Crônicas Não Transmissíveis (DCNT)** representam um dos maiores desafios para os sistemas de saúde.
+As **Doenças Crônicas Não Transmissíveis (DCNT)** são responsáveis por mais de **72% das mortes no Brasil**. Entre elas destacam-se:
 
-Segundo o Ministério da Saúde do Brasil, doenças como:
-
-* diabetes
 * hipertensão
+* diabetes
 * doenças cardiovasculares
 * doenças respiratórias crônicas
 * câncer
 
-são responsáveis por grande parte das mortes no país e exigem acompanhamento contínuo ao longo da vida.
+Estima-se que cerca de **40% da população adulta (≈ 57 milhões de pessoas)** tenha ao menos uma DCNT.
 
-Essas condições frequentemente podem ser controladas ou prevenidas com diagnóstico precoce e monitoramento contínuo.
+Muitas dessas doenças são silenciosas e só são diagnosticadas tardiamente, o que agrava o custo social e humano. O monitoramento remoto é especialmente relevante nesse contexto: permite identificar sinais de agravamento (ex.: pressão alta persistente ou aumento de glicemia) antes de uma crise, trazendo ganhos em qualidade de vida e redução de custos hospitalares.
+
+Referências:
+[Ministério da Saúde — Vigilância de DCNT](https://www.gov.br/saude/pt-br/composicao/svsa/vigilancia-de-doencas-cronicas-nao-transmissiveis/vigilancia-das-dant)
+[UNA-SUS — 57,4 milhões de brasileiros têm pelo menos uma doença crônica](https://www.unasus.gov.br/noticia/574-milhoes-de-brasileiros-tem-pelo-menos-uma-doenca-cronica)
+
+---
+
+## 5. Principais dores do sistema de saúde atual
+
+O projeto visa resolver três desafios críticos:
+
+### Monitoramento descontínuo
+
+Pacientes só são avaliados durante consultas esporádicas, deixando lacunas que podem atrasar diagnósticos. Um sistema contínuo de monitoramento remoto permitiria detectar precocemente alterações como elevações anormais da pressão ou irregularidades cardíacas, possibilitando intervenções antes de emergências.
+
+### Sobrecarga do sistema
+
+Hospitais e clínicas enfrentam demanda crescente, especialmente por causa de doenças crônicas e envelhecimento. Soluções digitais reduzem internações evitáveis:
+
+* 98% dos atendimentos remotos no Brasil são feitos por vídeo
+* 72% das consultas online são completamente resolvidas no ambiente digital
+
+Isso significa que a maioria dos casos é tratada sem recorrer a atendimento presencial, aliviando a pressão sobre o sistema.
+
+### Dados desconectados
+
+Informações dos pacientes costumam ficar espalhadas entre hospitais, clínicas, laboratórios e apps separados. Uma plataforma unificada facilita a visualização do histórico completo do paciente (medicações, exames, sinais vitais), gerando insights mais robustos para médicos e gestores.
 
 Referência:
-[https://www.gov.br/saude/pt-br/composicao/svsa/vigilancia-de-doencas-cronicas-nao-transmissiveis/vigilancia-das-dant](https://www.gov.br/saude/pt-br/composicao/svsa/vigilancia-de-doencas-cronicas-nao-transmissiveis/vigilancia-das-dant)
+[Serasa Experian — Painel de Saúde Digital Brasil](https://www.serasaexperian.com.br/sala-de-imprensa/institucional/brasil-ganha-primeiro-painel-publico-de-indicadores-da-saude-digital-com-parceria-inedita-entre-saude-digital-brasil-sdb-e-serasa-experian/)
 
 ---
 
-# 6. Problemas que o projeto busca resolver
+## 6. Público-alvo
 
-O sistema proposto no projeto busca abordar três desafios principais presentes nos sistemas de saúde atuais.
-
-## Falta de monitoramento contínuo
-
-Grande parte dos pacientes é acompanhada apenas durante consultas médicas periódicas. Isso dificulta a detecção precoce de alterações de saúde.
-
-Soluções de monitoramento remoto permitem:
-
-* detectar riscos de saúde precocemente
-* acompanhar pacientes em tempo real
-* melhorar o controle de doenças crônicas
+* **Hospitais e clínicas** (setor público e privado): gerenciar populações de pacientes crônicos, dar seguimento pós-alta e planejar recursos com base em dados de risco
+* **Operadoras de saúde**: reduzir custos de internação e sinistralidade com programas de prevenção e monitoramento contínuo para beneficiários
+* **Pacientes particulares**: especialmente idosos e portadores de DCNT, que ganham tranquilidade e autonomia ao controlar suas condições em casa
+* **Empresas (saúde corporativa)**: programas de prevenção para funcionários, com suporte de monitoramento remoto voltado a reduzir absenteísmo
 
 ---
 
-## Sobrecarga do sistema de saúde
+## 7. Concorrentes e soluções existentes
 
-Hospitais e clínicas frequentemente enfrentam alta demanda por atendimento.
+Há empresas globais investindo em saúde digital, mas muitas não focam em prevenção integrada:
 
-Soluções tecnológicas podem ajudar a:
+### Philips Healthcare
 
-* reduzir internações evitáveis
-* melhorar o acompanhamento pós-alta hospitalar
-* priorizar pacientes com maior risco
+Desenvolve tecnologias hospitalares e soluções de monitoramento remoto, mas foca principalmente em ambientes clínicos.
 
----
+Referência: [https://www.philips.com/healthcare](https://www.philips.com/healthcare)
 
-## Falta de integração de dados
+### Teladoc Health
 
-Dados médicos muitas vezes ficam distribuídos em diferentes sistemas e instituições, dificultando a análise completa do histórico do paciente.
+Líder em telemedicina e acompanhamento médico remoto, porém a maior parte da oferta consiste em teleconsultas pontuais.
 
-Plataformas digitais integradas permitem:
+Referência: [https://www.teladoc.com](https://www.teladoc.com)
 
-* centralizar informações de saúde
-* analisar padrões e tendências clínicas
-* apoiar decisões médicas baseadas em dados
+### Apple
 
----
+O Apple Watch monitora sinais vitais (batimento cardíaco, detecção de quedas etc.) para o consumidor, mas ainda falta integração clínica completa e análise preditiva robusta.
 
-# 7. Concorrentes e soluções existentes
+Referência: [https://www.apple.com/healthcare/](https://www.apple.com/healthcare/)
 
-Diversas empresas já desenvolvem soluções relacionadas à saúde digital e monitoramento remoto de pacientes.
+O Brasil conta com um ecossistema crescente de healthtechs — cerca de **9,4% das startups brasileiras** são focadas em saúde/bem-estar, mais do que fintechs. Ainda assim, a maioria das soluções existentes é pontual, sem integração médico-paciente completa. Há espaço para uma plataforma unificada que combine monitoramento com análises preditivas e alertas preventivos.
 
-## Philips Healthcare
-
-Empresa global que desenvolve tecnologias hospitalares e soluções de monitoramento remoto de pacientes.
-
-Referência:
-[https://www.philips.com/healthcare](https://www.philips.com/healthcare)
+Referência: [Abstartups — Healthtechs no ecossistema](https://startups.com.br/negocios/healthtechs/healthtechs-ocupam-lugar-das-fintechs-no-topo-do-ecossistema/)
 
 ---
 
-## Teladoc Health
+## 8. TAM, SAM e SOM
 
-Uma das maiores plataformas de telemedicina do mundo, oferecendo consultas médicas virtuais e acompanhamento remoto.
+| Nível | Descrição | Valor estimado |
+|-------|-----------|----------------|
+| **TAM** (Total Available Market) | Mercado global de saúde digital | ≈ US$ 946 bilhões em 2030 |
+| **TAM** (RPM global) | Mercado global de monitoramento remoto | ≈ US$ 56,9 bilhões em 2030 |
+| **SAM** (Serviceable Available Market) | Mercado de saúde digital no Brasil | US$ 12,4 bi (2025) → US$ 44,6 bi (2034) |
+| **SOM** (Serviceable Obtainable Market) | 10% dos beneficiários de planos de saúde (~5 mi pessoas) × US$ 50/ano | ≈ US$ 250 milhões/ano |
 
-Referência:
-[https://www.teladoc.com](https://www.teladoc.com)
-
----
-
-## Apple
-
-A empresa utiliza dispositivos vestíveis como o Apple Watch para monitoramento de indicadores de saúde como frequência cardíaca e atividade física.
-
-Referência:
-[https://www.apple.com/healthcare/](https://www.apple.com/healthcare/)
+Esses cálculos indicam que mesmo uma pequena participação de mercado gera escalas significativas de receita, justificando o investimento em validação e desenvolvimento da solução.
 
 ---
 
-# 8. Oportunidades de inovação
+## 9. Oportunidades e tendências futuras
 
-A combinação de **monitoramento remoto, análise de dados e medicina preventiva** representa uma grande oportunidade de inovação no setor de saúde.
+Tendências tecnológicas que suportam o foco em prevenção digital:
 
-Soluções que utilizam dados de saúde para identificar riscos antecipadamente podem:
+* **Inteligência Artificial em saúde**: algoritmos que analisam padrões de sinais vitais para prever crises e recomendar intervenções
+* **Wearables e IoT de saúde**: relógios inteligentes e sensores contínuos tornam possível medir dados clínicos em tempo real
+* **Medicina personalizada**: combinação de dados genômicos, estilo de vida e sinais clínicos para intervenções baseadas no perfil de risco individual
+* **Assistentes virtuais e chatbots médicos**: orientação imediata ao usuário sobre sintomas, medicamentação e agendamento
+* **Operações baseadas em dados**: consultórios e hospitais usando analytics para gerenciar pacientes populacionais e detectar grupos de risco
 
-* reduzir custos hospitalares
-* melhorar a qualidade de vida dos pacientes
-* permitir intervenções médicas mais rápidas
-
-Essa abordagem permite a transição de um modelo **reativo (tratar doenças)** para um modelo **preventivo (evitar doenças)**.
-
----
-
-# 9. Tendências futuras do setor
-
-Algumas tendências tecnológicas devem continuar impulsionando o crescimento da saúde digital:
-
-* inteligência artificial aplicada à saúde
-* dispositivos vestíveis (wearables)
-* análise preditiva de dados médicos
-* medicina personalizada
-* monitoramento remoto de pacientes
-
-Essas tecnologias possibilitam identificar riscos de saúde antes mesmo do aparecimento de sintomas, permitindo intervenções preventivas.
+O lançamento de um painel nacional de saúde digital demonstra que órgãos reguladores e a indústria estão investindo em transparência e uso de dados, criando ambiente e regulamentações propícias para soluções inovadoras.
 
 ---
 
-# Referências
+## Referências
 
-World Health Organization — Digital Health
-[https://www.who.int/health-topics/digital-health](https://www.who.int/health-topics/digital-health)
-
-Grand View Research — Digital Health Market
-[https://www.grandviewresearch.com/industry-analysis/digital-health-market](https://www.grandviewresearch.com/industry-analysis/digital-health-market)
-
-Markets and Markets — Remote Patient Monitoring Market
-[https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-168265922.html](https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-168265922.html)
-
-Agência Nacional de Saúde Suplementar — Dados do setor
-[https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-gerais](https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-gerais)
-
-Ministério da Saúde — Vigilância de Doenças Crônicas Não Transmissíveis
-[https://www.gov.br/saude/pt-br/composicao/svsa/vigilancia-de-doencas-cronicas-nao-transmissiveis/vigilancia-das-dant](https://www.gov.br/saude/pt-br/composicao/svsa/vigilancia-de-doencas-cronicas-nao-transmissiveis/vigilancia-das-dant)
-
-Philips Healthcare
-[https://www.philips.com/healthcare](https://www.philips.com/healthcare)
-
-Teladoc Health
-[https://www.teladoc.com](https://www.teladoc.com)
-
-Apple Healthcare
-[https://www.apple.com/healthcare/](https://www.apple.com/healthcare/)
+* [Serasa Experian — Brasil ganha primeiro painel público de indicadores da saúde digital](https://www.serasaexperian.com.br/sala-de-imprensa/institucional/brasil-ganha-primeiro-painel-publico-de-indicadores-da-saude-digital-com-parceria-inedita-entre-saude-digital-brasil-sdb-e-serasa-experian/)
+* [StartUs Insights — Digital Health Market Report 2026](https://www.startus-insights.com/innovators-guide/digital-health-market-report/)
+* [MarketsandMarkets — Remote Patient Monitoring Market](https://www.marketsandmarkets.com/Market-Reports/remote-patient-monitoring-market-77155492.html)
+* [IMARC Group — Mercado de Saúde Digital do Brasil](https://www.imarcgroup.com/report/pt-br/brazil-digital-health-market)
+* [ANS — Setor fecha 2023 com 51 milhões de beneficiários em planos de assistência médica](https://www.gov.br/ans/pt-br/assuntos/noticias/numeros-do-setor/setor-fecha-2023-com-51-milhoes-de-beneficiarios-em-planos-de-assistencia-medica)
+* [UNA-SUS — 57,4 milhões de brasileiros têm pelo menos uma doença crônica](https://www.unasus.gov.br/noticia/574-milhoes-de-brasileiros-tem-pelo-menos-uma-doenca-cronica)
+* [Abstartups — Healthtechs ocupam lugar das fintechs no topo do ecossistema](https://startups.com.br/negocios/healthtechs/healthtechs-ocupam-lugar-das-fintechs-no-topo-do-ecossistema/)
+* [Philips Healthcare](https://www.philips.com/healthcare)
+* [Teladoc Health](https://www.teladoc.com)
+* [Apple Healthcare](https://www.apple.com/healthcare/)
