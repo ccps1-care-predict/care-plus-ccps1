@@ -8,6 +8,7 @@ O CarePredict analisa dados clínicos e epidemiológicos para estimar riscos de 
 
 - [Visão do Projeto](#visao-do-projeto)
 - [Problema e Oportunidade](#problema-e-oportunidade)
+- [Pesquisa de Mercado](#pesquisa-de-mercado)
 - [Objetivos](#objetivos)
 - [Escopo Funcional (MVP)](#escopo-funcional-mvp)
 - [Arquitetura da Solução](#arquitetura-da-solucao)
@@ -43,6 +44,24 @@ Resultado esperado:
 No cenário atual, muitos pacientes procuram atendimento apenas quando a condição de saúde já está avançada. Isso aumenta o custo assistencial e reduz a efetividade da prevenção.
 
 O projeto endereça esse problema com uma abordagem de apoio à decisão médica e recomendação preventiva, evitando posicionamento regulatório de "diagnóstico automatizado".
+
+## Pesquisa de Mercado
+
+A saúde digital é uma área em forte crescimento, impulsionada por fatores como:
+
+- Envelhecimento da população e aumento de doenças crônicas
+- Necessidade de redução de custos hospitalares
+- Expansão da telemedicina
+- Adoção de monitoramento remoto de pacientes
+
+Dados de mercado:
+
+- O mercado global de Digital Health foi estimado em **US$ 288 bilhões em 2022** com expectativa de alcançar **mais de US$ 650 bilhões até 2030** (crescimento de 18% ao ano)
+- O mercado de monitoramento remoto deve atingir **US$ 175 bilhões até 2027** (crescimento de 26% ao ano)
+- No Brasil, mais de **50 milhões de brasileiros** possuem planos de saúde privados
+- Doenças crônicas não transmissíveis (diabetes, hipertensão, doenças cardiovasculares) exigem acompanhamento contínuo e podem ser prevenidas com diagnóstico precoce
+
+Documento completo: [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 
 ## Objetivos
 
@@ -194,6 +213,7 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 
 - [README.md](README.md)
 - [PROPOSTA.md](PROPOSTA.md)
+- [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 - [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
 - [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
 - [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)
