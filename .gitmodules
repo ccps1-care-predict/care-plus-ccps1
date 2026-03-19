@@ -1,15 +1,15 @@
-[submodule "services/api"]
-	path = services/api
+[submodule "modules/api"]
+	path = modules/api
 	url = https://github.com/drebtchinsky/care-plus-api.git
-[submodule "services/spa"]
-	path = services/spa
+[submodule "modules/spa"]
+	path = modules/spa
 	url = https://github.com/drebtchinsky/care-plus-spa.git
-[submodule "services/services"]
-	path = services/services
+[submodule "modules/services"]
+	path = modules/services
 	url = https://github.com/drebtchinsky/care-plus-services.git
-[submodule "services/data"]
-	path = services/data
+[submodule "modules/data"]
+	path = modules/data
 	url = https://github.com/drebtchinsky/care-plus-data.git
-[submodule "services/ml"]
-	path = services/ml
+[submodule "modules/ml"]
+	path = modules/ml
 	url = https://github.com/drebtchinsky/care-plus-ml.git
