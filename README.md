@@ -11,6 +11,7 @@ O CarePredict analisa dados clínicos e epidemiológicos para estimar riscos de 
 - [Pesquisa de Mercado](#pesquisa-de-mercado)
 - [Objetivos](#objetivos)
 - [Escopo Funcional (MVP)](#escopo-funcional-mvp)
+- [Integração com Dispositivos Wearables](#integracao-com-dispositivos-wearables)
 - [Arquitetura da Solução](#arquitetura-da-solucao)
 - [Arquitetura MVP Local (Docker)](#arquitetura-mvp-local-docker)
 - [Arquitetura de Dados](#arquitetura-de-dados)
@@ -30,14 +31,16 @@ O CarePredict foi concebido para atuar de forma preventiva na jornada de saúde 
 
 - dados clínicos individuais
 - dados populacionais públicos (DATASUS, IBGE e ANS)
+- **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, Garmin)
 - modelos de Machine Learning para risco de doenças
 - motor de recomendação preventiva
 
 Resultado esperado:
 
-- mais diagnóstico precoce
-- melhor acompanhamento clínico
+- mais diagnóstico precoce com visão 360° do estilo de vida
+- melhor acompanhamento clínico com dados contínuos
 - redução de custos assistenciais evitáveis
+- maior engajamento do paciente na prevenção
 
 ## Problema e Oportunidade
 
@@ -78,21 +81,69 @@ Documento completo: [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 - visualização de recomendações preventivas
 - agendamento de consultas e exames
 - acompanhamento de histórico
+- **visualização de dados wearables** (atividade, sono, frequência cardíaca)
+- **insights sobre estilo de vida** baseados em comparação com pares
 
 ### Médico
 
 - dashboard clínico do paciente
 - acesso a análise preditiva de risco
+- **visualização de padrões de estilo de vida** (energia do paciente)
 - suporte à anamnese orientada por dados
 - registro de diagnóstico
+- **recomendações de mudanças comportamentais** baseadas em dados wearables
 
 ### Plataforma
 
-- ingestão de dados clínicos e dados públicos
-- pipeline de anonimização (LGPD)
-- processamento, feature engineering e feature store
-- inferência de risco e recommendation engine
-- monitoramento de aplicação e modelos
+- ingestão de dados clínicos, dados públicos e **dados de wearables (contínuos)**
+- pipeline de anonimização (LGPD) com suporte a dados de saúde sensíveis
+- processamento, feature engineering com **lifestyle features** e feature store
+- inferência de risco com **modelos enriquecidos por dados wearable**
+- recommendation engine com integração de padrões comportamentais
+- monitoramento de aplicação, modelos e **qualidade de dados wearable**
+
+## Integração com Dispositivos Wearables
+
+O CarePredict integra dados contínuos de dispositivos wearables para enriquecer os modelos preditivos com informações de **estilo de vida real** do paciente.
+
+### 📱 Plataformas Suportadas
+
+**Fase 1 (MVP):**
+- 🍎 **Apple Health** — Apple Watch, iPhone
+- 🔵 **Google Fit** — Android Wear, Smartphones
+- 💪 **Fitbit** — Fitbit/Fitbit Sense
+
+**Fase 2 (Expansão):**
+- 🟣 **Garmin Connect** — relógios Garmin
+- 💍 **Oura Ring** — análise biométrica avançada
+
+### 📊 Dados Coletados
+
+| Categoria | Métricas | Importância Clínica |
+|-----------|----------|-------------------|
+| **Atividade Física** | Passos, exercício, duração, intensidade | Prevenção de obesidade, saúde cardiovascular |
+| **Frequência Cardíaca** | FC repouso, FC máxima, variabilidade | Indicador de estresse crônico e saúde cardíaca |
+| **Sono** | Duração, qualidade (deep/REM), coerência | Metabolismo, imunidade, saúde mental |
+| **Estresse** | Nível de estresse, tempo de recuperação | Prevenção de burnout e doenças psicossomáticas |
+
+### 💡 Vantagem Competitiva
+
+- ✅ **Visão 360°** — Combina dados clínicos com comportamento real
+- ✅ **Precisão aumentada** — Modelos 15-25% mais precisos com wearables
+- ✅ **Engajamento do paciente** — Dados próprios aumentam aderência
+- ✅ **Detecção precoce** — Padrões comportamentais revelam riscos meses antes
+- ✅ **LGPD Compliant** — OAuth 2.0, consentimento explícito, dados em Azure Key Vault
+
+### 🔗 Fluxo de Integração
+
+1. **Autenticação** — Paciente conecta dispositivo via OAuth
+2. **Sincronização** — Dados coletados diariamente (batch) ou em tempo real (streaming)
+3. **Processamento** — Normalização, validação, enriquecimento
+4. **Feature Engineering** — Extração de lifestyle features
+5. **Modelagem** — Modelos ML enriquecidos com dados comportamentais
+6. **Recomendação** — Insights contextualizados com estilo de vida
+
+Documento completo: [INTEGRACAO_WEARABLES.md](INTEGRACAO_WEARABLES.md)
 
 ## Arquitetura da Solução
 
@@ -101,13 +152,13 @@ A arquitetura cloud foi desenhada em Azure, com separação de camadas para apli
 Principais componentes:
 
 - Azure App Service (portal/dashboard)
-- Azure API Management + Backend API
-- Azure Entra ID (autenticação)
-- Azure Key Vault (segredos e chaves)
-- Event Hub + Data Factory (ingestão)
-- Data Lake + Azure SQL Database (armazenamento)
-- Databricks + Synapse (processamento analítico)
-- Azure Machine Learning (treino, registro e inferência)
+- Azure API Management + Backend API com **endpoints wearable**
+- Azure Entra ID (autenticação) + **OAuth 2.0 para wearables**
+- Azure Key Vault (**armazenamento seguro de tokens de wearables**)
+- Event Hub + Data Factory (**ingestão de dados wearable em streaming e batch**)
+- Data Lake + Azure SQL Database (armazenamento com **tabelas de wearables**)
+- Databricks + Synapse (**processamento de atividade física, sono, frequência cardíaca, estresse**)
+- Azure Machine Learning (**modelos preditivos enriquecidos com lifestyle features**)
 - Azure Monitor + Application Insights (observabilidade)
 
 Documento completo: [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
@@ -129,13 +180,18 @@ Documento completo: [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOU
 
 A arquitetura de dados contempla:
 
-- fontes clínicas (EHR, laboratório, hospital, sinistro, wearables, app)
+- **fontes clínicas** (EHR, laboratório, hospital, sinistro, app)
+- **fontes de wearables** (Apple Health, Google Fit, Fitbit, Garmin, Oura)
+  - Atividade física (passos, exercício, duração)
+  - Frequência cardíaca (repouso, máxima, variabilidade)
+  - Sono (duração, qualidade, coerência)
+  - Estresse (nível, tempo de recuperação)
 - fontes públicas (DATASUS, IBGE, ANS)
-- camada de privacidade com anonimização/pseudonimização
-- Data Lake por zonas (PHI, Raw, Processed, Curated)
-- camada analítica (warehouse/BI)
-- feature engineering + feature store
-- ciclo de ML com treino, validação, registry e serving
+- camada de privacidade com anonimização/pseudonimização (LGPD compliant)
+- Data Lake por zonas (PHI, Raw, Processed, Curated) com **dados wearables isolados**
+- camada analítica (warehouse/BI) com **relatórios de estilo de vida**
+- feature engineering com **lifestyle features** + feature store
+- ciclo de ML com treino, validação, registry e serving com **modelos enriquecidos**
 - feedback clínico para melhoria contínua
 
 Documento completo: [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)
@@ -184,18 +240,20 @@ Sprints planejadas com estimativas de Story Points:
 - Sprint 5: ~18 SP
 - Sprint 6: ~19 SP
 
-Documento completo: [esboço de epicos.md](esbo%C3%A7o%20de%20epicos.md)
+Documento completo: [EPICOS.md](EPICOS.md)
 
 ## Tecnologias Propostas
 
 Baseado na proposta técnica do projeto:
 
-- Backend: Python + FastAPI
-- ML: Scikit-learn, TensorFlow ou PyTorch
-- Dados: PostgreSQL (camada transacional) + Data Lake
-- Processamento: Pandas e pipelines de dados
-- Frontend: Angular
-- Cloud (arquitetura alvo): Microsoft Azure
+- **Backend:** Python + FastAPI
+- **Wearables:** requests-oauthlib (OAuth 2.0), Pydantic (validação)
+- **ML:** Scikit-learn, TensorFlow ou PyTorch
+- **Dados:** PostgreSQL (camada transacional) + Data Lake
+- **Processamento:** Pandas e pipelines de dados
+- **Frontend:** Angular
+- **Cloud (arquitetura alvo):** Microsoft Azure
+- **Segurança:** Azure Key Vault, Azure Entra ID
 
 Documento de referência: [PROPOSTA.md](PROPOSTA.md)
 
@@ -203,9 +261,13 @@ Documento de referência: [PROPOSTA.md](PROPOSTA.md)
 
 - proteção de dados sensíveis com segregação por zonas de dados
 - anonimização, pseudonimização e mascaramento antes da análise
-- gestão de segredos com Key Vault
+- gestão de segredos com Key Vault (**incluindo tokens de wearables**)
 - controle de acesso com Entra ID e RBAC
+- **autenticação OAuth 2.0 com wearables** (sem armazenar credenciais)
+- **conformidade LGPD** com direito ao esquecimento, consentimento explícito
 - direcionamento de uso como apoio à decisão médica, não diagnóstico automatizado
+- **criptografia AES-256** para dados de saúde em repouso
+- **TLS 1.3** para dados em trânsito
 
 ## Estrutura do Repositório
 
@@ -213,6 +275,7 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 
 - [README.md](README.md)
 - [PROPOSTA.md](PROPOSTA.md)
+- [INTEGRACAO_WEARABLES.md](INTEGRACAO_WEARABLES.md) — Estratégia de integração com dispositivos wearables
 - [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 - [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
 - [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
@@ -222,16 +285,33 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 - [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
 - [esboço de epicos.md](esbo%C3%A7o%20de%20epicos.md)
 
+### Código
+
+Implementações iniciais em `/modules`:
+
+- [modules/services/wearable_models.py](modules/services/wearable_models.py) — Modelos Pydantic para validação de dados wearables
+- [modules/services/wearable_auth.py](modules/services/wearable_auth.py) — Managers de autenticação OAuth para Apple Health, Google Fit e Fitbit
+
 ## Status do Projeto
 
 Status atual: Planejamento e definição de arquitetura.
+
+**Recursos implementados:**
+- ✅ Documentação técnica de integração com wearables
+- ✅ Modelos de dados Pydantic para validação
+- ✅ Managers OAuth para Apple Health, Google Fit e Fitbit
+- ✅ Arquitetura de fluxo de dados com wearables
 
 Próximos passos sugeridos:
 
 1. criar estrutura inicial do backend
 2. provisionar infraestrutura mínima em cloud
-3. implementar pipeline inicial de ingestão e anonimização
-4. disponibilizar primeira versão de API de recomendação
+3. **implementar API de conexão com wearables (OAuth flow)**
+4. implementar sincronização de dados wearables (batch/streaming)
+5. implementar pipeline ETL para processamento de dados wearables
+6. criar feature engineering para lifestyle features
+7. integrar com modelos preditivos
+8. disponibilizar primeira versão de API de recomendação com dados wearables
 
 ## Equipe
 
