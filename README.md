@@ -14,6 +14,7 @@ O CarePredict analisa dados clínicos e epidemiológicos para estimar riscos de 
 - [Integração com Dispositivos Wearables](#integracao-com-dispositivos-wearables)
 - [Arquitetura da Solução](#arquitetura-da-solucao)
 - [Arquitetura MVP Local (Docker)](#arquitetura-mvp-local-docker)
+- [Execução Local](#execucao-local)
 - [Arquitetura de Dados](#arquitetura-de-dados)
 - [Fluxos do Sistema](#fluxos-do-sistema)
 - [Modelo de Domínio (UML)](#modelo-de-dominio-uml)
@@ -175,6 +176,129 @@ Essa versao contempla:
 - fluxo ponta a ponta sem dependencia inicial de cloud publica
 
 Documento completo: [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
+
+## Execucao Local
+
+O repositório possui um [docker-compose.yml](docker-compose.yml) na raiz com a topologia do MVP local descrita na arquitetura Docker.
+
+### Pre-requisitos
+
+- Docker 24+ instalado
+- Docker Compose V2 habilitado (`docker compose version`)
+- Portas livres no host: `4200`, `5050`, `5432`, `6379`, `8001`, `8002`, `8003`, `8080`, `9000` e `9001`
+
+### Arquivos utilizados
+
+- [docker-compose.yml](docker-compose.yml) — orquestra os containers do MVP local
+- [.env.example](.env.example) — modelo de variáveis de ambiente
+- [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md) — referência arquitetural do ambiente local
+
+### Configuracao inicial
+
+1. Copie o arquivo de exemplo de variáveis:
+
+```bash
+cp .env.example .env
+```
+
+2. Ajuste os valores do arquivo `.env` se necessário, principalmente:
+
+- credenciais do Postgres
+- credenciais do MinIO
+- `JWT_SECRET`
+- `SYNC_INTERVAL_SECONDS`
+
+### Subindo o ambiente
+
+Para iniciar os serviços principais:
+
+```bash
+docker compose up --build
+```
+
+Para iniciar também o PgAdmin no perfil de desenvolvimento:
+
+```bash
+docker compose --profile dev up --build
+```
+
+Para subir em modo detached:
+
+```bash
+docker compose up --build -d
+```
+
+### Parando o ambiente
+
+```bash
+docker compose down
+```
+
+Para remover também os volumes persistentes locais:
+
+```bash
+docker compose down -v
+```
+
+### Servicos previstos no MVP local
+
+| Serviço | Porta no host | Função |
+|---|---:|---|
+| frontend-angular | 4200 | Portal web Angular |
+| backend-api | 8080 | API principal do sistema |
+| ml-inference-service | 8001 | Inferência de modelos locais |
+| wearable-connector | 8002 | Integração OAuth mockada com wearables |
+| wearable-mock-apis | 8003 | Simulação de Apple Health, Google Fit e Fitbit |
+| postgres | 5432 | Banco transacional |
+| redis | 6379 | Cache e filas leves |
+| minio | 9000 | Data lake local |
+| minio console | 9001 | Console web do MinIO |
+| pgadmin | 5050 | Administração do Postgres (opcional) |
+
+### Enderecos locais esperados
+
+- Frontend: `http://localhost:4200`
+- Backend API: `http://localhost:8080`
+- ML Inference: `http://localhost:8001`
+- Wearable Connector: `http://localhost:8002`
+- Wearable Mock APIs: `http://localhost:8003`
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001`
+- PgAdmin: `http://localhost:5050`
+
+### Logs e diagnostico rapido
+
+Ver logs agregados do ambiente:
+
+```bash
+docker compose logs -f
+```
+
+Ver logs de um serviço específico:
+
+```bash
+docker compose logs -f backend-api
+```
+
+Listar status dos containers:
+
+```bash
+docker compose ps
+```
+
+### Persistencia local
+
+Os seguintes volumes Docker são usados para manter dados entre reinicializações:
+
+- `pg_data`
+- `minio_data`
+- `redis_data`
+
+### Observacao importante sobre o estado atual do repositorio
+
+O [docker-compose.yml](docker-compose.yml) já define a topologia completa do MVP, mas a execução ponta a ponta depende de cada módulo referenciado possuir código-fonte e `Dockerfile` próprios dentro de `modules/`.
+
+No estado atual deste repositório, a estrutura está focada em documentação e definição arquitetural. Se algum diretório ainda estiver vazio, o `docker compose up --build` falhará até que os serviços correspondentes sejam implementados.
 
 ## Arquitetura de Dados
 

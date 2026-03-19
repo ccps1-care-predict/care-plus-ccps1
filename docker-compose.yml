@@ -1,0 +1,382 @@
+name: carepredict
+
+# ─────────────────────────────────────────────────────────────────
+#  CarePredict – MVP Local Docker
+#  Arquitetura: ver "ARQUITETURA CLOUD - MVP LOCAL DOCKER.md"
+#  Uso: cp .env.example .env   →   docker compose up --build
+# ─────────────────────────────────────────────────────────────────
+
+networks:
+  carepredict-net:
+    driver: bridge
+
+volumes:
+  pg_data:
+  minio_data:
+  redis_data:
+
+services:
+
+  # ──────────────────────────────
+  # INFRAESTRUTURA
+  # ──────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: carepredict-postgres
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-carepredict}
+      POSTGRES_USER: ${POSTGRES_USER:-carepredict}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-carepredict}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-carepredict} -d ${POSTGRES_DB:-carepredict}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: carepredict-redis
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: carepredict-minio
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"     # API S3-compatible
+      - "9001:9001"     # Console web
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────
+  # WEARABLE MOCK APIs
+  # Simula respostas das APIs Apple HealthKit, Google Fit e Fitbit
+  # com dados sintéticos de atividade, sono, FC e estresse
+  # ──────────────────────────────
+
+  wearable-mock-apis:
+    build:
+      context: ./modules/services/wearable/mock
+      dockerfile: Dockerfile
+    container_name: carepredict-wearable-mock
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    ports:
+      - "8003:8003"
+    environment:
+      PORT: 8003
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # WEARABLE CONNECTOR
+  # OAuth 2.0 simulado + endpoints de dispositivos
+  # ──────────────────────────────
+
+  wearable-connector:
+    build:
+      context: ./modules/services/wearable
+      dockerfile: Dockerfile
+    container_name: carepredict-wearable-connector
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    ports:
+      - "8002:8002"
+    environment:
+      PORT: 8002
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+      REDIS_URL: redis://redis:6379
+      WEARABLE_MOCK_URL: http://wearable-mock-apis:8003
+      OAUTH_MOCK_MODE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      wearable-mock-apis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # WEARABLE SYNC WORKER
+  # Sincronização periódica + feature engineering de lifestyle
+  # ──────────────────────────────
+
+  wearable-sync-worker:
+    build:
+      context: ./modules/services/wearable/sync
+      dockerfile: Dockerfile
+    container_name: carepredict-wearable-sync
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+      WEARABLE_CONNECTOR_URL: http://wearable-connector:8002
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-3600}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      wearable-connector:
+        condition: service_healthy
+
+  # ──────────────────────────────
+  # ML INFERENCE SERVICE
+  # ──────────────────────────────
+
+  ml-inference-service:
+    build:
+      context: ./modules/ml
+      dockerfile: Dockerfile
+    container_name: carepredict-ml
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # RISK SCORING ENGINE
+  # ──────────────────────────────
+
+  risk-scoring-engine:
+    build:
+      context: ./modules/services/risk
+      dockerfile: Dockerfile
+    container_name: carepredict-risk
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      ML_SERVICE_URL: http://ml-inference-service:8001
+    depends_on:
+      ml-inference-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # RECOMMENDATION ENGINE
+  # ──────────────────────────────
+
+  recommendation-engine:
+    build:
+      context: ./modules/services/recommendation
+      dockerfile: Dockerfile
+    container_name: carepredict-recommendation
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      ML_SERVICE_URL: http://ml-inference-service:8001
+      RISK_ENGINE_URL: http://risk-scoring-engine:8004
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml-inference-service:
+        condition: service_healthy
+      risk-scoring-engine:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8005/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # SCHEDULING SERVICE
+  # ──────────────────────────────
+
+  scheduling-service:
+    build:
+      context: ./modules/services/scheduling
+      dockerfile: Dockerfile
+    container_name: carepredict-scheduling
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8006/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # DATA WORKER (ETL)
+  # ──────────────────────────────
+
+  data-worker-etl:
+    build:
+      context: ./modules/data/worker
+      dockerfile: Dockerfile
+    container_name: carepredict-etl
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      ML_SERVICE_URL: http://ml-inference-service:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      ml-inference-service:
+        condition: service_healthy
+
+  # ──────────────────────────────
+  # BACKEND API  (exposta ao host)
+  # ──────────────────────────────
+
+  backend-api:
+    build:
+      context: ./modules/api
+      dockerfile: Dockerfile
+    container_name: carepredict-api
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgresql://${POSTGRES_USER:-carepredict}:${POSTGRES_PASSWORD:-carepredict}@postgres:5432/${POSTGRES_DB:-carepredict}
+      REDIS_URL: redis://redis:6379
+      ML_SERVICE_URL: http://ml-inference-service:8001
+      WEARABLE_CONNECTOR_URL: http://wearable-connector:8002
+      RECOMMENDATION_ENGINE_URL: http://recommendation-engine:8005
+      SCHEDULING_SERVICE_URL: http://scheduling-service:8006
+      JWT_SECRET: ${JWT_SECRET:-changeme-in-production}
+      CORS_ORIGINS: http://localhost:4200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ml-inference-service:
+        condition: service_healthy
+      wearable-connector:
+        condition: service_healthy
+      recommendation-engine:
+        condition: service_started
+      scheduling-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────
+  # FRONTEND ANGULAR  (exposto ao host)
+  # ──────────────────────────────
+
+  frontend-angular:
+    build:
+      context: ./modules/spa
+      dockerfile: Dockerfile
+    container_name: carepredict-frontend
+    restart: unless-stopped
+    networks:
+      - carepredict-net
+    ports:
+      - "4200:4200"
+    environment:
+      API_URL: http://localhost:8080
+    depends_on:
+      backend-api:
+        condition: service_healthy
+
+  # ──────────────────────────────
+  # PGADMIN  (opcional – perfil dev)
+  # ──────────────────────────────
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: carepredict-pgadmin
+    restart: unless-stopped
+    profiles:
+      - dev
+    networks:
+      - carepredict-net
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@carepredict.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    depends_on:
+      postgres:
+        condition: service_healthy
