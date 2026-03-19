@@ -285,27 +285,6 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 - [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
 - [EPICOS.md](EPICOS.md)
 
-## Status do Projeto
-
-Status atual: Planejamento e definição de arquitetura.
-
-**Recursos implementados:**
-- ✅ Documentação técnica de integração com wearables
-- ✅ Modelos de dados Pydantic para validação
-- ✅ Managers OAuth para Apple Health, Google Fit e Fitbit
-- ✅ Arquitetura de fluxo de dados com wearables
-
-Próximos passos sugeridos:
-
-1. criar estrutura inicial do backend
-2. provisionar infraestrutura mínima em cloud
-3. **implementar API de conexão com wearables (OAuth flow)**
-4. implementar sincronização de dados wearables (batch/streaming)
-5. implementar pipeline ETL para processamento de dados wearables
-6. criar feature engineering para lifestyle features
-7. integrar com modelos preditivos
-8. disponibilizar primeira versão de API de recomendação com dados wearables
-
 ## Equipe
 
 - Gabriel Drebtchinsky Q. de Carvalho (RM566729)
