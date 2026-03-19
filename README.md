@@ -283,14 +283,7 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 - [DIAGRAMA DE CASO DE USO.md](DIAGRAMA%20DE%20CASO%20DE%20USO.md)
 - [DIAGRAMA DE CLASSE.md](DIAGRAMA%20DE%20CLASSE.md)
 - [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
-- [esboço de epicos.md](esbo%C3%A7o%20de%20epicos.md)
-
-### Código
-
-Implementações iniciais em `/modules`:
-
-- [modules/services/wearable_models.py](modules/services/wearable_models.py) — Modelos Pydantic para validação de dados wearables
-- [modules/services/wearable_auth.py](modules/services/wearable_auth.py) — Managers de autenticação OAuth para Apple Health, Google Fit e Fitbit
+- [EPICOS.md](EPICOS.md)
 
 ## Status do Projeto
 
