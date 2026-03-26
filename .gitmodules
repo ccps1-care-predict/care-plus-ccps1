@@ -1,15 +1,15 @@
 [submodule "modules/api"]
 	path = modules/api
-	url = https://github.com/drebtchinsky/care-plus-api.git
+	url = https://github.com/ccps1-care-predict/care-plus-api.git
 [submodule "modules/spa"]
 	path = modules/spa
-	url = https://github.com/drebtchinsky/care-plus-spa.git
+	url = https://github.com/ccps1-care-predict/care-plus-spa.git
 [submodule "modules/services"]
 	path = modules/services
-	url = https://github.com/drebtchinsky/care-plus-services.git
+	url = https://github.com/ccps1-care-predict/care-plus-services.git
 [submodule "modules/data"]
 	path = modules/data
-	url = https://github.com/drebtchinsky/care-plus-data.git
+	url = https://github.com/ccps1-care-predict/care-plus-data.git
 [submodule "modules/ml"]
 	path = modules/ml
-	url = https://github.com/drebtchinsky/care-plus-ml.git
+	url = https://github.com/ccps1-care-predict/care-plus-ml.git
