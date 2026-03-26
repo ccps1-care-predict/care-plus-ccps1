@@ -17,12 +17,12 @@ Done
 - Infra local com Docker Compose funcional para nucleo MVP.
 - Submodulos existentes: `api`, `spa`, `services`, `data`, `ml`.
 - Arquitetura base aplicada:
-  - `api`: modular monolith (somente contexto `users` registrado).
+  - `api`: modular monolith com contextos `users`, `patients`, `recommendations` e `scheduling` registrados.
   - `services` e `ml`: servicos HTTP com `presentation/application/domain/infrastructure`.
   - `data` e `wearable-sync-worker`: pipeline em estagios.
   - `spa`: organizacao por feature (`dashboard`, `risk`, `recommendations`, `wearables`, `scheduling`).
 - Backend funcional ainda parcial: varios componentes continuam com stubs/in-memory para persistencia e inferencia.
-- Contexto `users` consolidado no backend: IDs UUID, migration aplicada e cobertura funcional completa dos cenarios USR-001 a USR-017.
+- Contextos `users`, `patients`, `recommendations` e `scheduling` com modulo e suite funcional dedicados no backend.
 
 ---
 
@@ -140,14 +140,16 @@ Checklist:
 - [x] `modules/spa/README.md`
 - [x] READMEs dos componentes internos atualizados
 
-### Card: Plano de testes funcionais do contexto users
+### Card: Plano de testes funcionais dos contextos da API
 Story Points: **3**
 Status: **Done**
 
 Checklist:
 - [x] `modules/api/TEST_PLAN_USERS_FUNCTIONAL.md` alinhado com endpoints `/{user_id}`
-- [x] Estrategia de dados deterministica por cenario documentada
-- [x] Secao de automacao atualizada para estado implementado da suite
+- [x] `modules/api/TEST_PLAN_PATIENTS_FUNCTIONAL.md` alinhado com endpoints `/patients`
+- [x] `modules/api/TEST_PLAN_RECOMMENDATIONS_FUNCTIONAL.md` alinhado com endpoints `/recommendations`
+- [x] `modules/api/TEST_PLAN_SCHEDULING_FUNCTIONAL.md` alinhado com endpoints `/scheduling`
+- [x] Suites funcionais em `tests/functional/{users,patients,recommendations,scheduling}`
 
 ### Card: Atualizacao dos ponteiros de submodulo
 Story Points: **2**
@@ -170,17 +172,17 @@ Objetivo: sair de baseline arquitetural para fluxo funcional real no backend.
 
 ### Card: Expandir API alem de usuarios
 Story Points: **8**
-Status: **In progress**
+Status: **Done**
 
 Checklist:
 - [x] Contexto `users` com persistencia em Postgres + cache Redis
 - [x] IDs de `users` migrados de `int` para `UUID` em todas as camadas
 - [x] Migration `0002_users_id_uuid` aplicada e validada no ambiente Docker
 - [x] Suite funcional `tests/functional/users` com 17 cenarios implementada e passando
-- [ ] Contexto `patients` no modular monolith
-- [ ] Contexto `recommendations` na API
-- [ ] Contexto `scheduling` na API
-- [ ] Contratos entre API e servicos internos
+- [x] Contexto `patients` no modular monolith
+- [x] Contexto `recommendations` na API
+- [x] Contexto `scheduling` na API
+- [x] Contratos entre API e servicos internos
 
 ### Card: Persistencia real nos servicos
 Story Points: **8**
@@ -194,7 +196,7 @@ Checklist:
 - [ ] Persistencia real no `data-worker-etl` (atualmente stub no `persist`)
 - [ ] Idempotencia de operacoes de agendamento/sync
 
-Pontos planejados no epico: **16 SP**
+Pontos restantes no epico: **8 SP**
 
 ---
 
@@ -282,6 +284,6 @@ Checklist:
 
 ## Totais (visao atual)
 
-- Done: **57 SP**
-- In progress: **16 SP**
+- Done: **65 SP**
+- In progress: **8 SP**
 - Backlog mapeado: **50 SP**

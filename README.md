@@ -185,7 +185,8 @@ O repositório possui um [docker-compose.yml](docker-compose.yml) na raiz com a 
 
 - Docker 24+ instalado
 - Docker Compose V2 habilitado (`docker compose version`)
-- Portas livres no host: `4200`, `5050`, `5432`, `6379`, `8001`, `8002`, `8003`, `8080`, `9000` e `9001`
+- Portas livres no host (modo base): `4200`, `5050`, `5432`, `6379`, `8080`, `9000` e `9001`
+- Portas adicionais no perfil completo (`full-mvp`): `8001`, `8002`, `8003`, `8004`, `8005`, `8006`, `8007`, `8008`
 
 ### Arquivos utilizados
 
@@ -242,18 +243,30 @@ docker compose down -v
 
 ### Servicos previstos no MVP local
 
+Servicos do modo base (`docker compose up --build`):
+
 | Serviço | Porta no host | Função |
 |---|---:|---|
 | frontend-angular | 4200 | Portal web Angular |
 | backend-api | 8080 | API principal do sistema |
-| ml-inference-service | 8001 | Inferência de modelos locais |
-| wearable-connector | 8002 | Integração OAuth mockada com wearables |
-| wearable-mock-apis | 8003 | Simulação de Apple Health, Google Fit e Fitbit |
 | postgres | 5432 | Banco transacional |
 | redis | 6379 | Cache e filas leves |
 | minio | 9000 | Data lake local |
 | minio console | 9001 | Console web do MinIO |
 | pgadmin | 5050 | Administração do Postgres (opcional) |
+
+Servicos adicionais no perfil completo (`docker compose --profile full-mvp up --build`):
+
+| Serviço | Porta no host | Função |
+|---|---:|---|
+| ml-inference-service | 8001 | Inferência de modelos locais |
+| wearable-connector | 8002 | Integração OAuth mockada com wearables |
+| wearable-mock-apis | 8003 | Simulação de Apple Health, Google Fit e Fitbit |
+| risk-scoring-engine | 8004 | Cálculo de risco clínico/comportamental |
+| recommendation-engine | 8005 | Geração de recomendações preventivas |
+| scheduling-service | 8006 | Orquestração de agenda e slots |
+| clinical-guidelines-validator | 8007 | Validação de regras clínicas |
+| population-data-service | 8008 | Contexto populacional por perfil |
 
 ### Enderecos locais esperados
 
@@ -262,6 +275,11 @@ docker compose down -v
 - ML Inference: `http://localhost:8001`
 - Wearable Connector: `http://localhost:8002`
 - Wearable Mock APIs: `http://localhost:8003`
+- Risk Scoring Engine: `http://localhost:8004`
+- Recommendation Engine: `http://localhost:8005`
+- Scheduling Service: `http://localhost:8006`
+- Clinical Guidelines Validator: `http://localhost:8007`
+- Population Data Service: `http://localhost:8008`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
 - PgAdmin: `http://localhost:5050`
@@ -294,11 +312,14 @@ Os seguintes volumes Docker são usados para manter dados entre reinicializaçõ
 - `minio_data`
 - `redis_data`
 
-### Observacao importante sobre o estado atual do repositorio
+### Observacao importante sobre execucao
 
-O [docker-compose.yml](docker-compose.yml) já define a topologia completa do MVP, mas a execução ponta a ponta depende de cada módulo referenciado possuir código-fonte e `Dockerfile` próprios dentro de `modules/`.
+O [docker-compose.yml](docker-compose.yml) define dois modos principais:
 
-No estado atual deste repositório, a estrutura está focada em documentação e definição arquitetural. Se algum diretório ainda estiver vazio, o `docker compose up --build` falhará até que os serviços correspondentes sejam implementados.
+- modo base (sem `profile`): sobe frontend, API, Postgres, Redis e MinIO
+- modo completo (`full-mvp`): inclui os servicos auxiliares de risco, recomendacao, agenda, wearable, ML e dados populacionais
+
+Para validar rapidamente o ambiente local, prefira iniciar pelo modo base e, em seguida, habilitar o perfil completo quando precisar testar integracoes entre servicos.
 
 ## Arquitetura de Dados
 
