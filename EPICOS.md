@@ -22,6 +22,7 @@ Done
   - `data` e `wearable-sync-worker`: pipeline em estagios.
   - `spa`: organizacao por feature (`dashboard`, `risk`, `recommendations`, `wearables`, `scheduling`).
 - Backend funcional ainda parcial: varios componentes continuam com stubs/in-memory para persistencia e inferencia.
+- Contexto `users` consolidado no backend: IDs UUID, migration aplicada e cobertura funcional completa dos cenarios USR-001 a USR-017.
 
 ---
 
@@ -139,6 +140,15 @@ Checklist:
 - [x] `modules/spa/README.md`
 - [x] READMEs dos componentes internos atualizados
 
+### Card: Plano de testes funcionais do contexto users
+Story Points: **3**
+Status: **Done**
+
+Checklist:
+- [x] `modules/api/TEST_PLAN_USERS_FUNCTIONAL.md` alinhado com endpoints `/{user_id}`
+- [x] Estrategia de dados deterministica por cenario documentada
+- [x] Secao de automacao atualizada para estado implementado da suite
+
 ### Card: Atualizacao dos ponteiros de submodulo
 Story Points: **2**
 Status: **Done**
@@ -148,7 +158,7 @@ Checklist:
 - [x] Commit da raiz com referencias atualizadas
 - [x] Push executado em todos os remotos
 
-Sprint total entregue: **7 SP**
+Sprint total entregue: **10 SP**
 
 ---
 
@@ -164,6 +174,9 @@ Status: **In progress**
 
 Checklist:
 - [x] Contexto `users` com persistencia em Postgres + cache Redis
+- [x] IDs de `users` migrados de `int` para `UUID` em todas as camadas
+- [x] Migration `0002_users_id_uuid` aplicada e validada no ambiente Docker
+- [x] Suite funcional `tests/functional/users` com 17 cenarios implementada e passando
 - [ ] Contexto `patients` no modular monolith
 - [ ] Contexto `recommendations` na API
 - [ ] Contexto `scheduling` na API
@@ -269,6 +282,6 @@ Checklist:
 
 ## Totais (visao atual)
 
-- Done: **54 SP**
+- Done: **57 SP**
 - In progress: **16 SP**
 - Backlog mapeado: **50 SP**
