@@ -2,652 +2,429 @@
 
 Crie os buckets assim:
 
-```
+```text
 Backlog
-Sprint 1 – Infra Docker
-Sprint 2 – Backend Core
-Sprint 3 – Dados e ETL
-Sprint 4 – Machine Learning
-Sprint 5 – Engines Clínicas
-Sprint 6 – Frontend + Fluxo E2E
-Sprint 7 – Integração Wearables
+In Progress
 Done
 ```
 
 ---
 
-# SPRINT 1 — Infraestrutura Docker
+# Estado atual do projeto (2026-03-26)
 
-Objetivo: ambiente rodando local.
+## Resumo rapido
+
+- Infra local com Docker Compose funcional para nucleo MVP.
+- Submodulos existentes: `api`, `spa`, `services`, `data`, `ml`.
+- Arquitetura base aplicada:
+  - `api`: modular monolith (somente contexto `users` registrado).
+  - `services` e `ml`: servicos HTTP com `presentation/application/domain/infrastructure`.
+  - `data` e `wearable-sync-worker`: pipeline em estagios.
+  - `spa`: organizacao por feature (`dashboard`, `risk`, `recommendations`, `wearables`, `scheduling`).
+- Backend funcional ainda parcial: varios componentes continuam com stubs/in-memory para persistencia e inferencia.
 
 ---
 
-### Card: Criar estrutura base do repositório
+# DONE
 
+## EPICO 1 - Infraestrutura Docker
+
+Objetivo: ambiente local reproduzivel para desenvolvimento e validacao.
+
+### Card: Estrutura base do repositorio
 Story Points: **3**
+Status: **Done**
 
 Checklist:
+- [x] Monorepo com pastas `modules/spa`, `modules/api`, `modules/services`, `modules/data`, `modules/ml`
+- [x] README principal criado
+- [x] `.env.example` com variaveis de execucao local
 
-* Criar monorepo do projeto
-* Criar pastas `/modules/spa`, `/modules/api`, `/modules/services`, `/modules/data`, `/modules/ml`
-* Criar `.env.example` (incluindo variáveis `OAUTH_MOCK_MODE`, `WEARABLE_MOCK_URL`)
-* Criar README do projeto
-
----
-
-### Card: Criar docker-compose inicial
-
+### Card: Docker Compose do MVP local
 Story Points: **5**
+Status: **Done**
 
 Checklist:
+- [x] `docker-compose.yml` na raiz
+- [x] Rede interna e volumes persistentes
+- [x] Dependencias entre servicos
+- [x] Healthchecks basicos
 
-* Criar docker-compose.yml
-* Configurar rede docker interna
-* Definir volumes persistentes
-* Configurar dependências entre serviços
-* Adicionar entrypoints de healthcheck para todos os serviços
-
----
-
-### Card: Subir serviços de persistência
-
+### Card: Persistencia local
 Story Points: **3**
+Status: **Done**
 
 Checklist:
+- [x] Postgres
+- [x] Redis
+- [x] MinIO
+- [x] Init de buckets MinIO (`raw`, `processed`, `curated`, `wearables-raw`, `wearables-features`)
 
-* Configurar container Postgres
-* Configurar container MinIO
-* Configurar container Redis
-* Criar volumes persistentes
-* Criar bucket MinIO separado para dados wearables
-
----
-
-### Card: Configurar serviços de desenvolvimento
-
+### Card: Servicos de desenvolvimento
 Story Points: **2**
+Status: **Done**
 
 Checklist:
+- [x] PgAdmin por profile opcional
+- [x] Console MinIO disponivel
 
-* Configurar pgAdmin
-* Configurar console MinIO
-* Criar scripts de inicialização
-
----
-
-### Card: Subir Wearable Connector e Mock APIs
-
-Story Points: **3**
-
-Checklist:
-
-* Criar container `wearable-connector` (porta 8002)
-* Criar container `wearable-mock-apis` (porta 8003)
-* Configurar `OAUTH_MOCK_MODE=true` via `.env`
-* Criar container `wearable-sync-worker` com cron configurável
-* Verificar comunicação entre containers via rede interna
+Sprint total entregue: **13 SP**
 
 ---
 
-Sprint total ≈ **16 SP**
+## EPICO 2 - Baseline de arquitetura dos componentes
 
----
+Objetivo: padronizar arquitetura de codigo conforme recomendacao tecnica.
 
-# SPRINT 2 — Backend API
-
-Objetivo: criar API central do sistema.
-
----
-
-### Card: Criar backend API base
-
+### Card: API em modular monolith
 Story Points: **5**
+Status: **Done**
 
 Checklist:
+- [x] Registro de modulo em `src/modules/users/module.py`
+- [x] Bootstrap da API atualizado para registrar modulos
+- [x] README do modulo API atualizado
 
-* Criar projeto FastAPI
-* Configurar rotas básicas
-* Implementar `/health`
-* Configurar logging estruturado (JSON) com request-id
-
----
-
-### Card: Implementar modelo de dados principal
-
-Story Points: **5**
+### Card: Servicos HTTP em camadas
+Story Points: **13**
+Status: **Done**
 
 Checklist:
+- [x] `risk-scoring-engine`
+- [x] `clinical-guidelines-validator`
+- [x] `recommendation-engine`
+- [x] `scheduling-service`
+- [x] `population-data-service`
+- [x] `wearable-connector`
+- [x] `wearable-mock-apis`
+- [x] `ml-inference-service`
+- [x] Estrutura `presentation/application/domain/infrastructure`
 
-Criar tabelas:
-
-* pacientes
-* consultas
-* exames
-* recomendacoes
-* agendamentos
-
----
-
-### Card: CRUD de pacientes
-
-Story Points: **3**
-
-Checklist:
-
-* Criar endpoint `POST /patients`
-* Criar endpoint `GET /patients`
-* Criar endpoint `GET /patients/{id}`
-
----
-
-### Card: Integração com banco Postgres
-
-Story Points: **3**
-
-Checklist:
-
-* Configurar ORM
-* Criar migrations
-* Testar conexão
-
----
-
-### Card: Criar endpoints de gerenciamento de wearables
-
-Story Points: **5**
-
-Checklist:
-
-* Criar endpoint `POST /wearables/connect` (inicia fluxo OAuth mock)
-* Criar endpoint `GET /wearables/devices` (lista dispositivos do paciente)
-* Criar endpoint `DELETE /wearables/devices/{id}` (revoga acesso)
-* Criar endpoint `GET /wearables/summary/{patient_id}` (retorna lifestyle features)
-* Criar endpoint `GET /wearables/sync/{device_id}` (dispara sync manual)
-* Criar endpoint `GET /wearables/consent/{patient_id}` (situação de consentimento LGPD)
-
----
-
-### Card: Criar migrations para tabelas wearables
-
-Story Points: **3**
-
-Checklist:
-
-* Criar migration `wearable_devices`
-* Criar migration `wearable_heartrate`
-* Criar migration `wearable_activity`
-* Criar migration `wearable_sleep`
-* Criar migration `wearable_stress`
-
----
-
-Sprint total ≈ **24 SP**
-
----
-
-# SPRINT 3 — Ingestão e ETL
-
-Objetivo: pipeline de dados do MVP.
-
----
-
-### Card: Criar Data Worker ETL
-
-Story Points: **5**
-
-Checklist:
-
-* Criar serviço `data-worker-etl`
-* Implementar job batch
-* Conectar MinIO
-
----
-
-### Card: Criar estrutura de data lake local
-
-Story Points: **3**
-
-Checklist:
-
-Criar buckets MinIO:
-
-* raw
-* processed
-* curated
-* wearables-raw (dados brutos de dispositivos)
-* wearables-features (lifestyle features calculadas)
-
----
-
-### Card: Pipeline de ingestão de dados clínicos
-
-Story Points: **5**
-
-Checklist:
-
-* Criar dataset sintético
-* Carregar dados no raw
-* Processar dados
-* Salvar em processed
-
----
-
-### Card: Gerar features clínicas para ML
-
-Story Points: **5**
-
-Checklist:
-
-* Calcular idade
-* Calcular IMC
-* Criar feature histórico exames
-* Criar dataset features
-
----
-
-### Card: Criar Wearable Sync Worker
-
-Story Points: **5**
-
-Checklist:
-
-* Criar serviço `wearable-sync-worker`
-* Implementar loop periódico (configurável via `SYNC_INTERVAL_SECONDS`)
-* Buscar tokens válidos no Postgres
-* Chamar Wearable Mock APIs para cada dispositivo conectado
-* Gravar dados brutos em `wearables-raw` no MinIO
-
----
-
-### Card: Criar pipeline de dados sintéticos de wearables
-
-Story Points: **5**
-
-Checklist:
-
-* Criar gerador de dados sintéticos (atividade, sono, FC, estresse)
-* Criar dataset representativo com variações temporais
-* Configurar Wearable Mock APIs para servir dados sintéticos
-* Cobrir ao menos 30 dias de histórico por paciente
-
----
-
-### Card: Implementar feature engineering de Lifestyle Features
-
+### Card: Workers batch em pipeline
 Story Points: **8**
+Status: **Done**
 
 Checklist:
+- [x] `wearable-sync-worker` com estagios de pipeline
+- [x] `data-worker-etl` com `extract -> validate -> transform -> persist`
+- [x] Estrutura `pipeline/steps`, `infrastructure`, `observability`
 
-Calcular as 15 lifestyle features:
-
-* `avg_weekly_steps` — média de passos dos últimos 7 dias
-* `sleep_quality_score` — score 0-100 baseado em duração e composição
-* `sleep_consistency` — regularidade de horários de sono
-* `insomnia_flag` — média < 6h nos últimos 7 dias
-* `stress_level_avg` — média de estresse semanal
-* `stress_variability` — variabilidade de estresse no período
-* `burnout_risk` — estresse > 70 E sono < 6h
-* `recovery_days_ratio` — % de dias com boa recuperação
-* `avg_resting_hr` — FC em repouso média
-* `hrv_avg` — variabilidade da FC média
-* `heart_rate_variability_low_risk` — indicador de risco baixo por HRV
-* `active_days_ratio` — % de dias com atividade registrada
-* `exercise_consistency` — regularidade de sessões
-* `activity_trend` — tendência crescente/decrescente
-* `lifestyle_compliance_score` — score composto 0-100
-
-Persistir features calculadas em `wearables-features` e no Postgres
-
----
-
-Sprint total ≈ **36 SP**
-
----
-
-# SPRINT 4 — Machine Learning
-
-Objetivo: primeiro modelo funcional com dados clínicos + wearables.
-
----
-
-### Card: Criar serviço ML Inference
-
-Story Points: **5**
-
-Checklist:
-
-* Criar serviço `ml-inference-service`
-* Criar endpoint `/predict`
-* Carregar modelo local
-* Implementar fallback quando lifestyle features estão ausentes (modelo clínico-only)
-
----
-
-### Card: Treinar primeiro modelo de risco (clínico)
-
+### Card: SPA orientada a feature
 Story Points: **8**
+Status: **Done**
 
 Checklist:
+- [x] `core/layout/app-shell.component.ts`
+- [x] Features separadas por rota
+- [x] Rotas: `/`, `/risk`, `/recommendations`, `/wearables`, `/scheduling`
+- [x] README do SPA atualizado
 
-* Criar dataset de treino com features clínicas
-* Treinar modelo diabetes
-* Avaliar métricas (AUC, precisão, recall)
-* Salvar modelo como artefato versionado
+Sprint total entregue: **34 SP**
 
 ---
 
-### Card: Treinar modelo enriquecido com Lifestyle Features
+## EPICO 3 - Documentacao e alinhamento tecnico
 
+Objetivo: manter documentacao alinhada ao estado implementado.
+
+### Card: Atualizacao dos READMEs dos submodulos
+Story Points: **5**
+Status: **Done**
+
+Checklist:
+- [x] `modules/api/README.md`
+- [x] `modules/services/README.md`
+- [x] `modules/data/README.md`
+- [x] `modules/ml/README.md`
+- [x] `modules/spa/README.md`
+- [x] READMEs dos componentes internos atualizados
+
+### Card: Atualizacao dos ponteiros de submodulo
+Story Points: **2**
+Status: **Done**
+
+Checklist:
+- [x] Commits por submodulo no padrao conventional commits
+- [x] Commit da raiz com referencias atualizadas
+- [x] Push executado em todos os remotos
+
+Sprint total entregue: **7 SP**
+
+---
+
+# IN PROGRESS
+
+## EPICO 4 - Backend de negocio (MVP funcional)
+
+Objetivo: sair de baseline arquitetural para fluxo funcional real no backend.
+
+### Card: Expandir API alem de usuarios
 Story Points: **8**
+Status: **In progress**
 
 Checklist:
+- [x] Contexto `users` com persistencia em Postgres + cache Redis
+- [ ] Contexto `patients` no modular monolith
+- [ ] Contexto `recommendations` na API
+- [ ] Contexto `scheduling` na API
+- [ ] Contratos entre API e servicos internos
 
-* Combinar features clínicas + 15 lifestyle features
-* Retreinar modelo com feature set completo
-* Comparar métricas entre modelo clínico-only e clínico+wearable
-* Documentar ganho de precisão obtido (target: 15–25%)
-* Salvar ambas as versões no model registry local
-
----
-
-### Card: Integrar API com serviço ML
-
-Story Points: **5**
-
-Checklist:
-
-* API montar feature vector (clínico + lifestyle)
-* Enviar para ML Inference
-* Receber probabilidades
-* Persistir resultado com versão do modelo utilizado
-
----
-
-Sprint total ≈ **26 SP**
-
----
-
-# SPRINT 5 — Engines Clínicas
-
-Objetivo: lógica médica do sistema com contexto comportamental.
-
----
-
-### Card: Criar Risk Scoring Engine
-
-Story Points: **5**
-
-Checklist:
-
-* Criar serviço `risk-scoring-engine`
-* Gerar `PredicaoRisco[]` por doença (com probabilidade e confiança)
-* Calcular `HealthScore` agregado (0-100)
-* Persistir saída dual com versão de modelo e timestamp
-
----
-
-### Card: Criar Recommendation Engine
-
-Story Points: **5**
-
-Checklist:
-
-* Definir regras clínicas
-* Mapear exames preventivos por perfil de risco
-* Gerar recomendações contextualizadas com dados de estilo de vida
-* Priorizar recomendações usando `PredicaoRisco[]` + `HealthScore`
-* Gerar orientações comportamentais quando `burnout_risk=true` ou `insomnia_flag=true`
-* Gerar metas de atividade baseadas em `avg_weekly_steps` e `active_days_ratio`
-
----
-
-### Card: Criar Clinical Guidelines Validator (Cloud)
-
-Story Points: **5**
-
-Checklist:
-
-* Criar serviço `clinical-guidelines-validator`
-* Validar predições por protocolos clínicos (idade, perfil e contraindicações)
-* Aplicar threshold clínico mínimo para riscos recomendáveis
-* Retornar `predicoes_validadas` e `predicoes_rejeitadas` com motivo
-* Garantir trilha auditável para recomendações finais
-
----
-
-### Card: Integrar engines com backend
-
-Story Points: **5**
-
-Checklist:
-
-* Backend chamar risk engine
-* Backend chamar clinical guidelines validator (cloud)
-* Backend chamar recommendation engine
-* Persistir recomendações (clínicas e comportamentais)
-* Associar recomendação à fonte de dados (clínica vs. wearable)
-
----
-
-Sprint total ≈ **15 SP**
-
----
-
-# SPRINT 6 — Frontend e Fluxo Completo
-
-Objetivo: validar experiência do usuário com dados clínicos e wearables.
-
----
-
-### Card: Criar frontend Angular base
-
-Story Points: **5**
-
-Checklist:
-
-* Criar projeto Angular
-* Criar layout básico
-* Integrar API
-
----
-
-### Card: Dashboard do paciente
-
-Story Points: **5**
-
-Checklist:
-
-* Mostrar dados clínicos do paciente
-* Mostrar score de saúde (clínico + comportamental)
-* Mostrar recomendações clínicas e comportamentais
-
----
-
-### Card: Painel de dispositivos wearables
-
-Story Points: **5**
-
-Checklist:
-
-* Tela de conexão de dispositivo (fluxo OAuth mock)
-* Tela de consentimento com checkbox LGPD
-* Lista de dispositivos conectados com status de sync
-* Botão de revogar acesso por dispositivo
-
----
-
-### Card: Visualização de dados de estilo de vida
-
+### Card: Persistencia real nos servicos
 Story Points: **8**
+Status: **In progress**
 
 Checklist:
+- [ ] `wearable-connector` sair de `InMemoryDeviceRepository`
+- [ ] `scheduling-service` sair de `InMemoryScheduleStore`
+- [ ] Migrations para tabelas de wearables e recomendacoes
+- [ ] Persistencia real no `wearable-sync-worker` (atualmente stub no `persist`)
+- [ ] Persistencia real no `data-worker-etl` (atualmente stub no `persist`)
+- [ ] Idempotencia de operacoes de agendamento/sync
 
-* Gráfico de passos por dia (últimos 7 dias)
-* Gráfico de qualidade do sono
-* Indicador de FC em repouso e HRV
-* Indicador de nível de estresse
-* Badge de alerts: burnout_risk, insomnia_flag
-* Exibir `lifestyle_compliance_score` com interpretação textual
-
----
-
-### Card: Dashboard do médico — padrões de estilo de vida
-
-Story Points: **5**
-
-Checklist:
-
-* Nova aba no dashboard médico: "Estilo de Vida"
-* Exibir tendências de atividade, sono e estresse do paciente
-* Destacar alertas comportamentais ativos
-* Exibir recomendações comportamentais geradas
+Pontos planejados no epico: **16 SP**
 
 ---
 
-### Card: Fluxo de agendamento
+# BACKLOG
 
-Story Points: **5**
+## EPICO 5 - Dados e ETL funcional
 
-Checklist:
+Objetivo: tornar o pipeline de dados operacional no MinIO/Postgres.
 
-* Criar scheduling service
-* Listar horários
-* Confirmar agendamento
-
----
-
-### Card: Teste end-to-end do fluxo preventivo com wearables
-
-Story Points: **5**
-
-Checklist:
-
-* Criar paciente
-* Conectar dispositivo wearable (mock)
-* Aguardar sync e geração de lifestyle features
-* Rodar análise preventiva com feature set completo
-* Gerar recomendações clínicas e comportamentais
-* Agendar exame a partir de recomendação
-
----
-
-Sprint total ≈ **38 SP**
-
----
-
-# SPRINT 7 — Integração Wearables (Hardening)
-
-Objetivo: solidificar a integração wearable, cobrir edge cases e preparar para cloud.
-
----
-
-### Card: Implementar OAuth 2.0 completo (Apple HealthKit)
-
+### Card: Integrar ETL com MinIO e metadata
 Story Points: **8**
-
 Checklist:
+- [ ] Escrita real em `raw`, `processed`, `curated`
+- [ ] Metadata de execucao por run
+- [ ] Retentativas e falha por etapa
 
-* Implementar `AppleHealthAuthManager` com OAuth real
-* Registrar app no Apple Developer Account
-* Implementar refresh automático de token
-* Implementar revogação via painel do paciente
-* Testar fluxo ponta a ponta com conta de teste
-
----
-
-### Card: Implementar OAuth 2.0 completo (Google Fit)
-
+### Card: Lifestyle features completas
 Story Points: **8**
-
 Checklist:
-
-* Implementar `GoogleFitAuthManager` com OAuth real
-* Registrar app no Google Cloud Console
-* Configurar escopos de acesso fitness
-* Implementar refresh e revogação
-* Testar fluxo ponta a ponta
+- [ ] Implementar conjunto completo de lifestyle features
+- [ ] Versionar features por janela temporal
+- [ ] Expor para inferencia
 
 ---
 
-### Card: Implementar OAuth 2.0 completo (Fitbit)
+## EPICO 6 - ML funcional
 
+Objetivo: passar de inferencia baseline para modelo versionado real.
+
+### Card: Carregamento de modelo real
 Story Points: **8**
-
 Checklist:
+- [ ] Artefato de modelo local versionado
+- [ ] `POST /predict` com inferencia real (hoje com resposta fixa)
+- [ ] Validacao de payload e fallback clinico-only
 
-* Implementar `FitbitAuthManager` com OAuth real
-* Registrar app no Fitbit Developer Portal
-* Cobrir endpoints de atividade, sono, FC e estresse
-* Implementar refresh e revogação
-* Testar fluxo ponta a ponta
+### Card: Integracao risk -> validator -> recommendation
+Story Points: **8**
+Checklist:
+- [ ] Encadear chamadas reais entre servicos
+- [ ] Persistir saida dual (`PredicaoRisco[]` + `HealthScore`)
+- [ ] Auditoria da validacao clinica
 
 ---
 
-### Card: Implementar validação e qualidade de dados wearables
+## EPICO 7 - Frontend E2E
 
+Objetivo: entregar fluxo navegavel com dados reais da API.
+
+### Card: Conectar paginas de feature na API
+Story Points: **8**
+Checklist:
+- [ ] Dashboard com dados reais
+- [ ] Tela de risco com retorno de engine
+- [ ] Tela de recomendacoes com priorizacao
+
+### Card: Fluxo de wearables e agendamento
+Story Points: **8**
+Checklist:
+- [ ] Conectar/disconectar dispositivos
+- [ ] Exibir estado de sincronizacao
+- [ ] Agendar a partir de recomendacao
+
+---
+
+## EPICO 8 - Hardening e prontidao cloud
+
+Objetivo: preparar migracao segura do MVP local para cloud.
+
+### Card: Observabilidade e resiliencia
 Story Points: **5**
-
 Checklist:
+- [ ] Correlation ID fim-a-fim
+- [ ] Timeouts/retries/circuit breaker
+- [ ] Metricas por endpoint/job
 
-* Detectar e descartar outliers (ex: FC > 220 bpm)
-* Alertar quando `data_completeness < 70%` para o paciente
-* Tratar dias com dados ausentes (interpolação ou flag)
-* Monitorar taxa de sucesso de sync por plataforma
-
----
-
-### Card: Implementar fluxo de consentimento LGPD completo
-
+### Card: Preparacao de deploy
 Story Points: **5**
-
 Checklist:
-
-* Registrar consentimento com timestamp e versão do termo
-* Implementar revogação com purge agendado dos dados
-* Garantir que dados wearables não aparecem em analytics após revogação
-* Exportar relatório de consentimentos por paciente
+- [ ] Parametrizacao por ambiente
+- [ ] Mapa `.env` -> secrets gerenciados
+- [ ] Checklist de rollout
 
 ---
 
-### Card: Testes de integração — Wearable Connector
+## Totais (visao atual)
 
-Story Points: **5**
-
-Checklist:
-
-* Testes de contrato para cada plataforma (Apple, Google, Fitbit)
-* Testes de tolerância a falhas (timeout, token expirado, API indisponível)
-* Testes do Sync Worker com dados sintéticos
-* Testes das 15 lifestyle features com cenários conhecidos
+- Done: **54 SP**
+- In progress: **16 SP**
+- Backlog mapeado: **50 SP**
 
 ---
 
-### Card: Implementar PopulationDataService On-Demand (Cloud)
+# Quebra operacional para Planner (copiar e colar)
 
-Story Points: **5**
+Formato sugerido por card:
 
-Checklist:
+`[Bucket] Titulo curto - SP`
 
-* Criar serviço `population-data-service`
-* Consultar DATASUS, IBGE e ANS sob demanda por idade/gênero/região
-* Implementar cache com TTL de 24h
-* Integrar com fluxo de análise preventiva (FeatureEngineer/API)
-* Criar fallback para indisponibilidade de fonte externa
+`Criterio de aceite: ...`
 
----
+## EPICO 4 - Backend de negocio
 
-### Card: Preparar configuração para deploy em Azure
+`[In Progress] API: criar contexto patients (estrutura + modulo) - 3 SP`
 
-Story Points: **3**
+`Criterio de aceite: modulo patients registrado em main, rotas versionadas ativas, teste de smoke do contexto passando.`
 
-Checklist:
+`[In Progress] API: criar contexto recommendations (contratos + endpoint base) - 2 SP`
 
-* Mapear variáveis de ambiente do `.env` para Azure Key Vault
-* Desligar `OAUTH_MOCK_MODE` e apontar para OAuth real
-* Garantir cron de sincronização Batch Only em produção
-* Configurar PopulationDataService On-Demand com cache (Redis/Memory)
-* Documentar checklist de migração do MVP local para Azure
+`Criterio de aceite: endpoint do contexto responde 200/422 conforme schema e dependencia injetada.`
 
----
+`[In Progress] API: criar contexto scheduling (contratos + endpoint base) - 2 SP`
 
-Sprint total ≈ **42 SP**
+`Criterio de aceite: endpoint do contexto responde 200/422 conforme schema e dependencia injetada.`
+
+`[In Progress] API: contratos internos entre API e engines (DTO + adapter HTTP) - 1 SP`
+
+`Criterio de aceite: chamadas tipadas para risk/validator/recommendation com tratamento de timeout e erro 5xx.`
+
+`[Backlog] Wearable connector: trocar InMemory por repositorio Postgres - 3 SP`
+
+`Criterio de aceite: connect/list/revoke persistem em banco e sobrevivem a restart do servico.`
+
+`[Backlog] Scheduling service: trocar InMemory por repositorio Postgres - 3 SP`
+
+`Criterio de aceite: slots/booking/cancel persistem em banco com lock de concorrencia basico.`
+
+`[Backlog] API: migrations wearables + recommendations - 1 SP`
+
+`Criterio de aceite: alembic upgrade head cria tabelas e indices previstos sem erro.`
+
+`[Backlog] Idempotencia de sync/agendamento - 1 SP`
+
+`Criterio de aceite: mesma requisicao repetida nao duplica registros e retorna status consistente.`
+
+## EPICO 5 - Dados e ETL funcional
+
+`[Backlog] ETL: persist raw no MinIO - 2 SP`
+
+`Criterio de aceite: arquivo bruto por run gravado em raw com naming padrao.`
+
+`[Backlog] ETL: persist processed no MinIO - 2 SP`
+
+`Criterio de aceite: dataset validado/transformado gravado em processed por particao de data.`
+
+`[Backlog] ETL: persist curated no MinIO/Postgres - 2 SP`
+
+`Criterio de aceite: output final disponivel para consumo por inferencia e consulta de auditoria.`
+
+`[Backlog] ETL: metadata por run - 1 SP`
+
+`Criterio de aceite: tabela/arquivo de metadados com status, contagem de linhas e duracao.`
+
+`[Backlog] ETL: retries + falha por etapa - 1 SP`
+
+`Criterio de aceite: retries configuraveis e falha marcada por step sem interromper rastreabilidade.`
+
+`[Backlog] Lifestyle features: lote minimo operacional - 3 SP`
+
+`Criterio de aceite: features principais (passos, sono, FC, estresse) calculadas para janela de 7 dias.`
+
+`[Backlog] Lifestyle features: versionamento temporal - 3 SP`
+
+`Criterio de aceite: features armazenadas com versao e janela (inicio/fim).`
+
+`[Backlog] Lifestyle features: exposicao para inferencia - 2 SP`
+
+`Criterio de aceite: endpoint/adapter entrega vetor de features esperado pelo ML.`
+
+## EPICO 6 - ML funcional
+
+`[Backlog] ML: carregar artefato versionado local - 3 SP`
+
+`Criterio de aceite: versao ativa do modelo consultavel e logada no predict.`
+
+`[Backlog] ML: substituir resposta fixa por inferencia real - 3 SP`
+
+`Criterio de aceite: POST /predict usa modelo carregado e retorna probabilidades calculadas.`
+
+`[Backlog] ML: validacao de payload + fallback clinico-only - 2 SP`
+
+`Criterio de aceite: payload invalido retorna 422 e ausencia de wearable ativa fallback controlado.`
+
+`[Backlog] Orquestracao risk -> validator -> recommendation - 3 SP`
+
+`Criterio de aceite: fluxo sequencial completo com trace id e tratamento de erro entre servicos.`
+
+`[Backlog] Persistencia de saida dual (predicoes + health score) - 3 SP`
+
+`Criterio de aceite: resultado salvo com model_version e timestamp de execucao.`
+
+`[Backlog] Auditoria da validacao clinica - 2 SP`
+
+`Criterio de aceite: predicoes rejeitadas e motivos ficam registrados para rastreio.`
+
+## EPICO 7 - Frontend E2E
+
+`[Backlog] Dashboard: integrar dados reais da API - 3 SP`
+
+`Criterio de aceite: dashboard consome endpoint real com estado loading/erro/sucesso.`
+
+`[Backlog] Risco: tela conectada ao retorno da engine - 2 SP`
+
+`Criterio de aceite: tela apresenta predicoes e health score de chamada real.`
+
+`[Backlog] Recomendacoes: priorizacao por risco - 3 SP`
+
+`Criterio de aceite: lista ordenada por prioridade clinica com fonte de recomendacao.`
+
+`[Backlog] Wearables: conectar/desconectar dispositivo - 3 SP`
+
+`Criterio de aceite: fluxo de vinculo e revogacao funcional com refletor visual de status.`
+
+`[Backlog] Wearables: status de sincronizacao - 2 SP`
+
+`Criterio de aceite: ultimo sync, situacao e erros exibidos para o usuario.`
+
+`[Backlog] Scheduling: agendar via recomendacao - 3 SP`
+
+`Criterio de aceite: recomendacao acionavel cria agendamento e confirma no frontend.`
+
+## EPICO 8 - Hardening e prontidao cloud
+
+`[Backlog] Correlation ID fim-a-fim - 2 SP`
+
+`Criterio de aceite: request id propagado entre API, engines e workers nos logs.`
+
+`[Backlog] Timeouts/retries/circuit breaker entre servicos - 2 SP`
+
+`Criterio de aceite: politicas configuradas por cliente HTTP com fallback previsivel.`
+
+`[Backlog] Metricas por endpoint/job - 1 SP`
+
+`Criterio de aceite: latencia, erro e throughput exportados por servico e worker.`
+
+`[Backlog] Parametrizacao por ambiente - 2 SP`
+
+`Criterio de aceite: desenvolvimento/staging/producao com configs separadas e sem hardcode.`
+
+`[Backlog] Mapa .env -> secrets gerenciados - 2 SP`
+
+`Criterio de aceite: inventario de segredos com destino (Key Vault ou equivalente) definido.`
+
+`[Backlog] Checklist de rollout - 1 SP`
+
+`Criterio de aceite: roteiro de deploy com pre-check, smoke test e rollback documentado.`
