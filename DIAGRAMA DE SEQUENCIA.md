@@ -65,21 +65,19 @@ Frontend-->>Paciente: ✅ Dispositivo conectado com sucesso!
 
 # 2️⃣ Sincronização de Dados Wearables
 
-Fluxo de coleta e sincronização de dados contínuos do dispositivo wearable.
+Fluxo de coleta e sincronização **batch diária** de dados do dispositivo wearable (OPÇÃO A — Batch Only).
 
 ```mermaid
 sequenceDiagram
 
-participant WearableDevice as Dispositivo<br/>Wearable
 participant PlatformaWearable as Plataforma Wearable<br/>API
 participant DataConnector as Wearable<br/>Data Connector
 participant KeyVault
-participant EventHub
 participant AnonymizationService
 participant WearableDB
 participant DataLake
 
-loop Sincronização Diária (Batch)
+loop Sincronização Diária (Batch) — Uma vez ao dia
     DataConnector->>KeyVault: Recuperar access token
     KeyVault-->>DataConnector: Token
     
@@ -89,12 +87,13 @@ loop Sincronização Diária (Batch)
     
     DataConnector->>DataConnector: Valida integridade dos dados
     DataConnector->>DataConnector: Normaliza unidades (milhas → km, etc)
+    DataConnector->>DataConnector: Detecção de anomalias
     
-    DataConnector->>EventHub: Emite evento de dados wearable
+    DataConnector->>AnonymizationService: Enviar lote de dados para processamento batch
     
-    EventHub->>AnonymizationService: Processa dados com mascaramento de PII
     AnonymizationService->>AnonymizationService: Remove identificadores diretos
     AnonymizationService->>AnonymizationService: Aplica pseudonimização
+    AnonymizationService->>AnonymizationService: Data masking conforme regras LGPD
     
     AnonymizationService->>WearableDB: Armazena dados anonimizados
     WearableDB-->>AnonymizationService: Confirmação
@@ -102,25 +101,16 @@ loop Sincronização Diária (Batch)
     AnonymizationService->>DataLake: Armazena dados processados (zona Raw/Processed)
     DataLake-->>AnonymizationService: Confirmação
     
+    AnonymizationService-->>DataConnector: Batch processado com sucesso
     DataConnector->>DataConnector: Atualiza last_sync timestamp
-end
-
-loop Sincronização em Tempo Real (Streaming - opcional)
-    WearableDevice->>PlatformaWearable: Envia evento de frequência cardíaca
-    PlatformaWearable-->>DataConnector: Notifica novo evento
-    
-    DataConnector->>EventHub: Emite evento em tempo real
-    EventHub->>AnonymizationService: Processa imediatamente
-    AnonymizationService->>WearableDB: Armazena ponto de dados
 end
 ```
 
 ---
 
-# 3️⃣ Análise de Risco com Integração de Wearables
+# 3️⃣ Análise de Risco com Integração de Wearables e Dual Output (OPÇÃO A)
 
-Fluxo central do sistema.  
-O modelo utiliza **dados clínicos do paciente + dados epidemiológicos populacionais + dados contínuos de wearables** para prever riscos e gerar recomendações preventivas.
+Fluxo central do sistema mostrando o **modelo dual de saída**: PredicaoRisco (granular) + HealthScore (agregado).
 
 ```mermaid
 sequenceDiagram
@@ -146,8 +136,15 @@ ClinicalDB-->>API: Retorna diagnósticos, exames, consultas
 API->>WearableDB: Buscar dados de estilo de vida (últimas 4 semanas)
 WearableDB-->>API: Retorna atividade, sono, FC, estresse
 
-API->>PopulationData: Buscar dados epidemiológicos
-PopulationData-->>API: Retorna indicadores populacionais
+API->>PopulationData: Consultar dados epidemiológicos (idade/região/gênero)
+note over PopulationData: Verifica cache (24h TTL)
+alt cache hit
+    PopulationData-->>API: ✓ Retorna indicadores em cache (~10ms)
+else cache miss
+    PopulationData->>PopulationData: Consulta DATASUS, IBGE, ANS em paralelo
+    PopulationData->>PopulationData: Armazena em cache (24h TTL)
+    PopulationData-->>API: Retorna indicadores populacionais (fresh ~200ms)
+end
 
 API->>FeatureEngineer: Enviar dados clínicos + wearables + populacionais
 FeatureEngineer->>FeatureEngineer: Calcular lifestyle features
@@ -160,19 +157,86 @@ FeatureEngineer-->>API: Features engenheirizadas
 API->>MLService: Enviar feature vector completo (clínico + comportamental + populacional)
 MLService->>MLService: Executar modelo preditivo enriquecido
 
-MLService-->>RiskEngine: Retorna probabilidades de risco (com confiança aumentada)
+MLService-->>RiskEngine: Retorna array PredicaoRisco (probabilidades por doença)
 
-RiskEngine->>ClinicalGuidelines: Consultar protocolos médicos
-ClinicalGuidelines-->>RiskEngine: Regras clínicas
+RiskEngine->>RiskEngine: Calcula HealthScore (0-100 agregado)
+RiskEngine->>RiskEngine: PredicaoRisco[]: Diabetes 34%, HTN 28%, Apneia 15%, etc
+RiskEngine->>RiskEngine: HealthScore: 71 (Risco Baixo)
 
-RiskEngine->>RecommendationEngine: Gerar recomendações preventivas contextualizadas
+RiskEngine->>ClinicalGuidelines: Enviar PredicaoRisco + HealthScore para validação clínica
+ClinicalGuidelines->>ClinicalGuidelines: Validar clinicamente cada risco conforme diretrizes
+ClinicalGuidelines->>ClinicalGuidelines: Consultar protocolos médicos (rastreamento, contraindições)
+ClinicalGuidelines->>ClinicalGuidelines: Filtrar riscos não clinicamente apropriados
+ClinicalGuidelines-->>RecommendationEngine: Retorna PredicaoRisco validado + exames apropriados
+
+RecommendationEngine->>RecommendationEngine: Gerar recomendações (exames, lifestyle, verificações)
 RecommendationEngine->>RecommendationEngine: Considerar padrões de atividade do paciente
 RecommendationEngine->>RecommendationEngine: Adaptar recomendações ao estilo de vida
-RecommendationEngine-->>API: Lista de exames, consultas e ações de lifestyle sugeridas
+RecommendationEngine->>RecommendationEngine: Aplicar lógica de priorização (exames > lifestyle > educação)
+RecommendationEngine-->>API: Lista de exames, consultas, orientações + HealthScore (validada)
 
-API-->>Frontend: Retorna recomendações + insights de wearables
-Frontend-->>Paciente: Exibe recomendações preventivas + gráficos de estilo de vida
+API-->>Frontend: Retorna PredicaoRisco + HealthScore + recomendações + insights
+Frontend-->>Paciente: Exibe:<br/>• HealthScore 71 (visão geral)<br/>• Riscos específicos (Diabetes 34%, etc)<br/>• Recomendações priorizadas<br/>• Gráficos de estilo de vida
 ```
+
+---
+
+## Dual Output Explicado
+
+### Output 1: PredicaoRisco Array (Granular)
+
+Array de riscos específicos para cada doença:
+
+```json
+[
+  {
+    "doenca": "Diabetes Tipo 2",
+    "probabilidade": 0.34,
+    "confianca": 0.87,
+    "dataAnalise": "2026-03-25",
+    "features_criticas": ["avg_weekly_steps", "imc"]
+  },
+  {
+    "doenca": "Síndrome Metabólica",
+    "probabilidade": 0.42,
+    "confianca": 0.79,
+    "dataAnalise": "2026-03-25",
+    "features_criticas": ["imc", "stress_level_avg"]
+  },
+  {
+    "doenca": "Hipertensão",
+    "probabilidade": 0.28,
+    "confianca": 0.92,
+    "dataAnalise": "2026-03-25",
+    "features_criticas": ["idade", "hrv_avg"]
+  }
+]
+```
+
+**Uso**:
+- Clínico: "Síndrome Metabólica é o risco maior (42%)"
+- RecommendationEngine: "Exames para Síndrome Metabólica em primeiro lugar"
+
+### Output 2: HealthScore (Agregado 0-100)
+
+Número único que resume saúde geral:
+
+```
+HealthScore = 71 (Risco Baixo)
+
+Cálculo: 100 - média ponderada dos riscos
+Interpretação:
+- 0-20:   Risco muito alto (cuidado imediato)
+- 21-40:  Risco alto
+- 41-60:  Risco moderado
+- 61-80:  Risco baixo ← Paciente aqui
+- 81-100: Risco muito baixo
+```
+
+**Uso**:
+- UI: Exibir score claro para paciente
+- Histórico: Rastrear mês-mês (71 → 72 → 70)
+- Alerts: Se cair abaixo de 40, alertar médico
 
 ---
 
@@ -400,3 +464,183 @@ O CarePredict utiliza **três tipos de dados para análise preditiva**:
 * fatores demográficos
 
 Essas informações combinadas permitem gerar **modelos muito mais robustos de medicina preventiva** com **precisão 15-25% superior** em relação a modelos que usam apenas dados clínicos.
+
+---
+
+# 🎯 Notas Arquiteturais
+
+## Escopo dos Fluxos
+
+Este documento descreve os **fluxos de sequência** da arquitetura (OPÇÃO A — Batch Only).
+
+Cada fluxo detalha componentes, integrations e armazenamentos:
+- Sincronização de wearables: **Batch diária** (uma vez ao dia)
+- Anonimização separada (AnonymizationService processamento batch)
+- Feature engineering consolidado em batch
+
+## Simplificações no MVP Local
+
+O MVP local (Docker Compose) **segue o mesmo padrão batch**:
+
+| Fluxo | Cloud (Batch) | MVP (Batch) |
+|-------|-------|-----|
+| **1. OAuth 2.0** | Real (Apple/Google/Fitbit) | Mockado (OAUTH_MOCK_MODE=true) |
+| **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
+| **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
+| **Dados Públicos** | Ingestão via DataFactory (batch) | Não presente |
+| **KeyVault** | Azure Key Vault | Arquivo .env |
+| **Latência de Features** | ~24h (atualizado diariamente) | ~24h (atualizado diariamente) |
+
+### 2A. Sincronização no MVP
+
+No MVP, o fluxo é mais simples:
+
+```
+Wearable Sync Worker (cron diário)
+    ↓
+[Consulta Postgres por tokens válidos]
+    ↓
+[Wearable Connector com OAUTH_MOCK_MODE=true]
+    ↓
+[Retorna dados sintéticos ou mockados]
+    ↓
+[Valida e normaliza]
+    ↓
+[Escreve em MinIO: raw, processed, curated]
+    ↓
+[Atualiza Feature Store local]
+```
+
+**Sem EventHub, sem AnonymizationService, sem streaming.**
+
+### 3A-5A. Análise Preventiva no MVP
+
+Da mesma forma, os fluxos 3 (Análise), 4 (Agendamento) e 5 (Exames) no MVP removem:
+- Componentes LGPD explícitos (AnonymizationService)
+- Integração com sistemas externos de agenda (simulado)
+- Feedback Loop complexo (feedback via dados sintéticos)
+
+## Compatibilidade MVP ↔️ Cloud
+
+A lógica de negócio é idêntica:
+- Paciente conecta dispositivo (fluxo 1)
+- Dados sincronizam periodicamente (fluxo 2)
+- Análise preventiva combina fontes (fluxo 3)
+- Recomendações geram agendamentos (fluxos 4-5)
+- Modelos treinam com feedback (fluxo 7)
+
+A diferença é **infraestrutura**, não **lógica**.
+
+Ao migrar MVP → Cloud:
+1. Trocar Docker Postgres por Azure SQL (schema igual)
+2. Trocar MinIO por Azure Data Lake (mesma estrutura de camadas)
+3. Ativar AnonymizationService (novo componente)
+4. Ativar Azure DataFactory para dados públicos (novo componente)
+5. Ativar OAuth real para wearables (configuração, não código)
+
+**Nenhuma reescrita de lógica de negócio.**
+
+## Banco de Dados — OPÇÃO A (Azure SQL Cloud + PostgreSQL MVP)
+
+Todos os fluxos de sequência referenciam **ClinicalDB** e **WearableDB** como bancos de dados genéricos:
+
+### Cloud Production: Azure SQL Database
+
+| Banco | Plataforma | Dados |
+|-------|-----------|-------|
+| **ClinicalDB** | Azure SQL Database | Pacientes, consultas, exames, diagnósticos, recomendações |
+| **WearableDB** | Azure SQL Database | Wearable devices, heartrate, activity, sleep, stress (últimas 4 sem) |
+
+**Características**:
+- ✅ LGPD-compliant (encryption + auditing)
+- ✅ Backup automático + HA
+- ✅ Compliance: SOC 2, HIPAA
+- ✅ Schema idêntico ao MVP
+
+### MVP Local: PostgreSQL
+
+| Banco | Plataforma | Dados |
+|-------|-----------|-------|
+| **ClinicalDB** | PostgreSQL Docker | Mesmos dados (pacientes, consultas, etc) |
+| **WearableDB** | PostgreSQL Docker | Mesma estrutura de wearables |
+
+**Características**:
+- ✅ Mesmo schema que Azure SQL
+- ✅ 100% compatível para migração
+- ✅ Open-source, sem licença
+- ✅ Perfeito para dev/test
+
+---
+
+## Feature Store nos Fluxos de Sequência
+
+A **Feature Store** aparece implicitamente em todo o Fluxo 3 (Análise Preventiva) e Fluxo 7 (Retreinamento):
+
+### Como a Feature Store funciona
+
+**Fluxo 3 (Análise Preventiva)**:
+```
+Dados processados chegam
+    ↓
+[Feature Store LEITURA]
+    ↓
+- Recupera 15 lifestyle features (versionadas)
+- Recupera clinical features (últimas 4 semanas)
+- Recupera population features (agregados anônimos)
+    ↓
+[ML Service constrói feature vector]
+    ↓
+[Modelo prevê risco]
+```
+
+**Fluxo 7 (Retreinamento)**:
+```
+Histórico acumulado (~7 anos)
+    ↓
+[Feature Store ESCRITA + VERSIONAMENTO]
+    ↓
+- Computa 15 lifestyle features (novo período)
+- Atualiza índices de qualidade
+- Cria nova versão (v2026.03.25)
+    ↓
+[ML Service lê versão específica]
+    ↓
+[Modelo treina com features versionadas]
+    ↓
+[MLops registra lineage: v2026.03.25 → Model v4]
+```
+
+### Diferença Cloud vs MVP
+
+| Aspecto | Cloud (Databricks) | MVP (MinIO) |
+|---------|-------------------|-----------|
+| **Armazenamento** | Databricks Feature Store (managed) | MinIO curated layer |
+| **Versionamento** | Automático (Delta Lake timestamps) | Manual (folders: v1/, v2/, current symlink) |
+| **Lineage** | Rastreado (ML → features → versão) | Comentários em código |
+| **QA/QC** | Data Quality Checks automáticos | Assertions em Python |
+| **Acesso** | Feature Store SDK (SQL/Python) | Pandas read_parquet() |
+| **Latência (Leitura)** | <100ms (SSD) | <500ms (local disk) |
+| **Throughput** | 100k+ features/seg | 10k features/seg |
+
+### Impacto na Análise (Fluxo 3)
+
+Ambos os ambientes implementam a **mesma lógica de seleção**:
+
+```python
+# Cloud (Databricks)
+features = fs.read_table("carepredict.lifestyle_features", as_of_delta_timestamp="2026-02-01")
+clinical = fs.read_table("carepredict.clinical_features", as_of_delta_timestamp="2026-02-01")
+population = fs.read_table("carepredict.population_features", as_of_delta_timestamp="2026-02-01")
+
+# MVP (MinIO + Pandas)
+features = pd.read_parquet("s3://analytics-features/lifestyle_features/current/2026-02-01.parquet")
+clinical = pd.read_parquet("s3://analytics-features/clinical_features/current/2026-02-01.parquet")
+population = pd.read_parquet("s3://analytics-features/population_features/current/2026-02-01.parquet")
+
+# Resultado: mesmo DataFrame com mesmas 15 features
+# → Modelos fazem predições idênticas
+```
+
+A **Feature Store garante que Cloud e MVP usam exatamente as mesmas features para análise**, permitindo que modelos treinem em Cloud e façam predições consistentes em MVP e vice-versa.
+
+---

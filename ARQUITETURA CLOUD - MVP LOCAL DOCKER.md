@@ -324,6 +324,56 @@ volumes:
 
 ## 8. Seguranca e LGPD no Ambiente Local
 
+### Anonimização no MVP: Intencionalmente Ausente ⚠️
+
+O MVP **NÃO inclui Data Anonymization Service** por deliberação:
+
+**Razões:**
+
+1. **Dados Sintéticos**: Todos os dados do MVP são sintéticos/fake
+   - Nomes são `Paciente Test 001`, `Paciente Test 002`
+   - CPFs são `000.000.000-00`, `111.111.111-11`
+   - Emails são `patient001@test.local`
+   - Wearables dados aleatoriamente gerados
+
+2. **Escopo de Desenvolvimento**: MVP é ambiente dev/test
+   - Sem dados de pacientes reais
+   - Sem violação de privacidade possível
+   - Objetivo é validar fluxo, não segurança
+
+3. **Simplificação Arquitetural**: Menos componentes = prototipagem mais rápida
+   - MVP em 1 máquina (Docker Compose)
+   - Cloud tem 5-10 serviços; MVP tem 8-10
+
+4. **Não há benefício Funcional**: Anônimização não afeta lógica de negócio
+   - Feature engineering não muda
+   - Modelos não mudam
+   - Apenas a "embalagem" dos dados
+
+**O que fazer para testar LGPD no MVP:**
+
+Se quiser adicionar anonimização como teste:
+
+```yaml
+# Adicionar ao docker-compose.yml:
+anonymization-service:
+  build: ./modules/services/anonymization
+  ports: ["8010:8010"]
+  depends_on: [redis]
+  environment:
+    - REDIS_URL=redis://redis:6379
+    - ENABLE_MASKING=true
+    - CIPHER_KEY=${CIPHER_KEY}
+```
+
+Mas isso é **opcional** e **não obrigatório** para o MVP funcionar.
+
+**Foco absoluto:** Validar fluxo preventivo (paciente → wearable → sync → análise → recomendação).
+
+---
+
+## 8A. Seguranca Basica (que está presente)
+
 - Dados sensiveis apenas para desenvolvimento e testes.
 - Preferir dados sinteticos ou anonimizados (especialmente dados de wearables).
 - Segredos via arquivo .env (nao versionar — incluindo tokens OAuth e chaves de API mockadas).
@@ -374,3 +424,141 @@ Quando o MVP estiver validado, migrar gradualmente:
 - Wearable Sync Worker local -> Azure Functions ou Azure Databricks para processamento distribuido.
 
 Assim, o time preserva a arquitetura logica e troca apenas a camada de infraestrutura. O modulo de wearables foi projetado com factory pattern para suportar essa transicao sem reescrita de logica de negocio.
+
+---
+
+## 12. 🎯 Notas sobre Alinhamento Cloud
+
+Este MVP **segue intencionalmente uma arquitetura simplificada** da Cloud, com as seguintes simplificações:
+
+### Armazenamento de Dados
+
+| Aspecto | Cloud | MVP |
+|--------|-------|-----|
+| Banco Transacional | Azure SQL Database | PostgreSQL (container) |
+| Data Lake | Azure Data Lake Storage Gen2 | MinIO (bucket local) |
+| Cache | Azure Cache for Redis | Redis (container) |
+| Schema | Idêntico | Idêntico (facilita migração) |
+
+✅ **Decisão**: PostgreSQL no MVP permite prototipagem rápida. Schema é idêntico ao Azure SQL, facilitando transição.
+
+### Processamento de Dados
+
+| Aspecto | Cloud | MVP |
+|--------|-------|-----|
+| Feature Engineering | Azure Databricks | Wearable Sync Worker (Python) |
+| Anonimização | Data Anonymization Service | Ausente (dados não sensíveis) |
+| Dados Públicos | Azure Data Factory (batch) | Ausente (não no escopo MVP) |
+| Mode de Sync | Batch + Streaming Hybrid | Batch apenas (cron diário) |
+
+✅ **Decisão**: MVP simplificado, Cloud robusto. Lógica de features é identica.
+
+### Modelos de ML
+
+| Aspecto | Cloud | MVP |
+|--------|-------|-----|
+| Feature Store | Databricks Feature Store | MinIO/curated (Parquet) |
+| Registry | Azure ML Model Registry | Arquivo local versionado |
+| Inference | Azure ML Inference Endpoint | Serviço HTTP simples |
+
+✅ **Decisão**: MVP usa modelos locais (sem retrainamento), Cloud gerencia ciclo de vida completo.
+
+### Mapeamento de Componentes
+
+```
+Cloud                              MVP (Simplificado)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Azure App Service       →         frontend-angular
+Azure API Management    →         (integrado na API)
+Backend API             →         backend-api
+Azure SQL Database      →         postgres (container)
+Azure Data Lake         →         minio (container)
+Wearable Connector      →         wearable-connector
+Wearable Sync Worker    →         wearable-sync-worker
+Databricks/Synapse      →         data-worker-etl
+Lifestyle Features      →         Cálculo no sync-worker
+Feature Store           →         MinIO curated layer
+Azure ML Training       →         Offline (script Python)
+Azure ML Inference      →         ml-inference-service
+Risk Engine             →         risk-scoring-engine
+Recommendation Engine   →         recommendation-engine
+Scheduler               →         scheduling-service
+Azure Monitor           →         Docker logs + healthcheck
+```
+
+### Decisão Crítica: PostgreSQL vs Azure SQL
+
+✅ **Por que PostgreSQL no MVP?**
+1. **Zero custo**: Pode rodar localmente sem infraestrutura
+2. **Open-source**: Sem dependência de licenças
+3. **Mesma lógica SQL**: Schema é portable para Azure SQL
+4. **Facilita testes**: Ambiente reproduzível em qualquer máquina
+5. **Preparação para migração**: Dados migram facilmente via dump/restore
+
+⚠️ **Mudanças necessárias ao migrar para Azure SQL:**
+- T-SQL vs PL/pgSQL: Funções e triggers requerem ajuste (esperado)
+- Tipos de dados: Geralmente 1:1 compatíveis
+- Índices: Mesmo padrão, alguns hints específicos de plataforma
+
+✅ **Schema permanece idêntico em ambos**, apenas o motor muda.
+
+### Feature Store MVP vs Cloud
+
+| Aspecto | Cloud | MVP |
+|--------|-------|-----|
+| **Implementação** | Databricks Feature Store | MinIO curated layer |
+| **Versionamento** | Automático | Manual (v1/, v2/folders) |
+| **Lineage** | Interface web integrada | Documentado em código |
+| **Quality Checks** | Integrados | Script Python |
+| **Access Control** | RBAC + Auditoria | Arquivo .env |
+| **Reutilização** | SDK nativo | Leitura Parquet manual |
+
+✅ **15 lifestyle features são idênticas em ambos** — lógica, não implementação.
+
+**Como lidar com Feature Store no MVP:**
+
+Wearable Sync Worker escreve features no MinIO:
+
+```
+MinIO bucket: analytics-features
+├─ lifestyle_features/
+│  ├─ v1/
+│  │  └─ 2026-03-25.parquet
+│  │     (schema: avg_weekly_steps, sleep_quality_score, [...])
+│  └─ current → v1/  # Symlink para versão ativa
+├─ clinical_features/
+│  └─ current
+└─ [...]
+```
+
+API lê features assim:
+
+```python
+# em Python
+
+import pandas as pd
+from minio import Minio
+
+client = Minio("minio:9000")
+response = client.get_object("analytics-features", "lifestyle_features/current/2026-03-25.parquet")
+
+features_df = pd.read_parquet(response)
+# DataFrame com colunas: patient_id, avg_weekly_steps, sleep_quality_score, ...
+```
+
+ML Inference Service usa como entrada:
+
+```python
+# Fetch features para um paciente
+features = features_df[features_df["patient_id"] == patient_id].iloc[0]
+
+# Forward ao modelo
+prediction = model.predict([
+    features["avg_weekly_steps"],
+    features["sleep_quality_score"],
+    features["stress_level_avg"],
+    # [...] + features clínicas
+])
+```
+
+---

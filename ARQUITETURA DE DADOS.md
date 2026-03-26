@@ -1,12 +1,14 @@
-# 🧠 Arquitetura de Dados — CarePredict (Versão Revisada)
+# 🧠 Arquitetura de Dados — CarePredict (Cloud Production)
 
-Este documento descreve a arquitetura de dados do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
+Este documento descreve a arquitetura de dados do **CarePredict** na **Cloud Production** (Azure).
+
+Para a versão local com Docker, ver `ARQUITETURA CLOUD - MVP LOCAL DOCKER.md`.
 
 A arquitetura integra:
 
 - dados clínicos individuais
 - **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, etc)
-- dados epidemiológicos públicos
+- dados epidemiológicos públicos (DATASUS, IBGE, ANS)
 - pipelines de processamento e feature engineering
 - modelos de Machine Learning
 - mecanismos de recomendação preventiva
@@ -48,10 +50,9 @@ end
 subgraph Ingestion["Camada de Ingestão"]
 
 API[APIs Clínicas]
-Batch[ETL Batch]
-Stream[Streaming de Eventos]
-WearableIngest["Wearable Data Connector<br/>(OAuth + Sync)"]
-PublicAPI[Ingestão de Dados Públicos]
+BatchETL[ETL Batch — Diário]
+WearableIngest["Wearable Data Connector<br/>(OAuth + Batch Sync)"]
+PublicAPI[Ingestão de Dados Públicos<br/>(Batch)]
 
 end
 
@@ -181,8 +182,8 @@ end
 EHR --> API
 Lab --> API
 Hosp --> API
-Claims --> Batch
-App --> Stream
+Claims --> BatchETL
+App --> BatchETL
 
 Wearables --> WearableTypes
 WearableTypes --> WearableIngest
@@ -192,10 +193,9 @@ IBGE --> PublicAPI
 ANS --> PublicAPI
 
 API --> Anonymization
-Stream --> Anonymization
-Batch --> Anonymization
+BatchETL --> Anonymization
 WearableIngest --> Anonymization
-PublicAPI --> Raw
+PublicAPI --> Anonymization
 
 Anonymization --> LGPD
 LGPD --> PHI
@@ -308,63 +308,151 @@ Esses dados ajudam a identificar:
 
 # 2️⃣ Camada de Ingestão
 
-Responsável por trazer dados para a plataforma.
+Responsável por trazer dados para a plataforma (OPÇÃO A — Batch Only).
 
 Métodos de ingestão:
 
-**APIs Clínicas**
+**APIs Clínicas (Batch)**
 
-Integração com sistemas clínicos e prontuários eletrônicos.
+Integração com sistemas clínicos e prontuários eletrônicos via ETL scheduled.
 
-**Streaming (NOVO com Wearables)**
+**Wearables (Batch Diário)**
 
-Eventos em tempo real de:
-- Frequência cardíaca
-- Notificações de estresse
-- Alertas de anomalias
+Sincronização uma vez ao dia (cron configurável) de dados wearables:
+- Resumo de passos do dia (últimas 24h)
+- Dados de sono (últimas 24h)
+- Sumário de exercícios (últimas 24h)
+- Frequência cardíaca agregada (últimas 24h)
 
-**Batch (NOVO com Wearables)**
+**Ingestão Pública (Batch)**
 
-Sincronização diária/horária de dados wearables:
-- Resumo de passos do dia
-- Dados de sono da noite
-- Sumário de exercícios
+Dados epidemiológicos governamentais (semanal/mensal).
 
-**Ingestão pública**
-
-Dados epidemiológicos governamentais.
-
-**Fluxo de Wearables:**
+**Fluxo de Wearables (OPÇÃO A)**:
 
 ```
 Plataforma Wearable (Apple Health, Google Fit, Fitbit)
         ↓
-OAuth 2.0 Authentication + Sincronização
+OAuth 2.0 Authentication
         ↓
-Batch Diário (últimas 24h de dados)
+Wearable Data Connector (cron diário: ex 00:00 UTC)
         ↓
-Streaming em Tempo Real (opcional - eventos críticos)
+Recupera dados dos últimos 24h
         ↓
-Azure Event Hub (fila de eventos)
+Valida integridade + Normaliza unidades (milhas→km, etc)
         ↓
-Validação de Integridade
+Detecção de anomalias
         ↓
-Normalização de Unidades (milhas→km, etc)
+Envia lote para AnonymizationService (processamento batch)
 ```
+
+**Sem EventHub**: Dados wearables não utilizam Azure Event Hub. Fluxo direto batch para anonimização.
 
 ---
 
-# 3️⃣ Camada de Privacidade
+# 3️⃣ Camada de Privacidade — Data Anonymization Service
 
-Antes de armazenar dados no Data Lake, o sistema aplica:
+Antes de armazenar dados no Data Lake, **todos os dados sensíveis passam** por um serviço dedicado de anonimização.
 
-* anonimização
-* pseudonimização
-* mascaramento de dados
+## Data Anonymization Service (Novo!)
 
-Isso garante conformidade com:
+Microserviço **crítico para LGPD** que processa eventos e dados antes de persistência.
 
-**LGPD (Lei Geral de Proteção de Dados)**.
+**Responsabilidades:**
+
+1. **Pseudonimização** — Substitui identificadores reais por tokens
+   ```
+   Entrada: { patient_id: "12345", name: "João Silva", ... }
+   Saída:   { pseudonym: "anon_a7f3", ... }
+   ```
+
+2. **Data Masking** — Remove ou mascara campos sensíveis
+   ```
+   Nome:  "João Silva" → "REMOVED"
+   CPF:   "123.456.789-00" → "***-***-789-00"
+   Email: "john@example.com" → "f7d3e1a9..." (hash)
+   ```
+
+3. **Data Suppression** — Remove informações desnecessárias
+   ```
+   Timestamp: "2026-03-25 14:32:15" → "2026-03-25" (apenas data)
+   IP: "192.168.1.1" → "REMOVED"
+   ```
+
+4. **Auditoria** — Registra cada transformação
+   ```
+   "2026-03-25 14:35:22 | patient_12345 | anonymized_to: anon_a7f3 | fields: [name, email]"
+   ```
+
+## Integração no Pipeline
+
+Todas as fontes de dados sensíveis passam pela anonimização:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           FONTES DE DADOS SENSÍVEIS                     │
+├─────────────────────────────────────────────────────────┤
+│  EHR API  │  Stream  │  Wearable Ingest  │  Batch ETL  │
+└──────────┬──────────┬────────────────────┬──────────────┘
+           │          │                    │
+           └──────────┼────────────────────┘
+                      ↓
+         ┌────────────────────────────┐
+         │ Azure Event Hub (buffering)│
+         └────────┬───────────────────┘
+                  ↓
+    ╔═════════════════════════════════════╗
+    ║ DATA ANONYMIZATION SERVICE (novo!)  ║
+    ║  • Pseudonimização                  ║
+    ║  • Masking                          ║
+    ║  • Suppression                      ║
+    ║  • Auditoria                        ║
+    ╚═════════════════════════════════════╝
+                  ↓
+    [Dados anonimizados! Seguro para Storage]
+                  ↓
+    ┌──────────────────────────────────────┐
+    │   Azure Data Lake (PHI + Raw zones)  │
+    │   ✅ Pseudonimizados               │
+    │   ✅ Auditáveis                    │
+    │   ✅ LGPD-compliant                │
+    └──────────────────────────────────────┘
+```
+
+## Exemplo: Fluxo de Wearables
+
+Dados de wearables recebem tratamento especial:
+
+```
+Plataforma Wearable (Apple Health)
+  └─ [Dados brutos com patient_id=12345]
+        ↓ 
+  OAuth 2.0 Token (armazenado em Key Vault)
+  Dados: { passos: 8920, fc_repouso: 62, sono_horas: 7.2, ... }
+        ↓
+  [Validação & Normalização]
+        ↓
+  Event Hub
+        ↓
+  ┌─────────────────────────────────────┐
+  │ ANONYMIZATION SERVICE               │
+  │ Entrada:  { patient_id: 12345, ... }│
+  │ Saída:    { pseudonym: anon_a7f3,...}│
+  │ Log:      patient_12345 → anon_a7f3 │
+  └─────────────────────────────────────┘
+        ↓
+  Azure Data Lake - PHI Zone
+  [Isolado, criptografado, auditado]
+```
+
+## Conformidade LGPD
+
+O AnonymizationService aplicado:
+
+✅ **Anonimização "de facto"** — Dados não podem ser rastreados ao indivíduo sem chave de auditoria
+✅ **Direito ao esquecimento** — Purge agendado remove dados orinundos + logs de auditoria
+✅ **Incidentes minimizados** — Vazamento pós-anonimização não expõe identidade real
+✅ **Auditável** — Cada transformação registrada para compliance
 
 ---
 
@@ -503,51 +591,157 @@ Adicionar lifestyle features aos modelos resulta em:
 
 ---
 
-# 8️⃣ Feature Store
+# 8️⃣ Feature Store — Repositório Centralizado de Features
 
-Armazena features reutilizáveis para ML.
+O **Feature Store** é um repositório centralizado que gerencia features (variáveis) utilizadas pelo Machine Learning:
+- Consistência entre treino e produção (zero skew)
+- Versionamento automático
+- Reutilização entre modelos
+- Auditoria de uso (qual modelo usa qual feature?)
 
-**Features armazenadas:**
+### Cloud Production: Databricks Feature Store
 
-- **Clinical Features** — dados de saúde clássicos
-- **Behavioral Features** — dados derivados de wearables (novo!)
-- **Population Features** — indicadores epidemiológicos
+Na **Cloud**, o Feature Store é um componente dedicado (Databricks ou Azure ML Feature Store):
 
-Benefícios:
+**Vantagens:**
+- ✅ Versionamento automático de cada feature
+- ✅ Lineage tracking (quem computou, quando, para quem)
+- ✅ Quality metrics integradas (completeness, accuracy)
+- ✅ Access control e auditoria
+- ✅ Integração nativa com modelos ML
 
-* consistência entre treino e produção
-* performance (evita recálculo)
-* reutilização entre modelos
-* rastreabilidade de features (qual modelo usa qual feature?)
-
-**Exemplo de vetor de features para um paciente:**
+**Estrutura:**
 
 ```
+Databricks Feature Store
+├─ FeatureSet: Clinical_Features (v3)
+│  ├─ age, imc, diabetes_history, [...]
+│  └─ Metadata: version, owner, SLA, access_log
+├─ FeatureSet: Lifestyle_Features (v2)  ← NOVO!
+│  ├─ avg_weekly_steps, sleep_quality_score, [...]
+│  └─ Metadata: version, quality_metrics
+└─ FeatureSet: Population_Features (v1)
+   ├─ diabetes_incidence_region, age_group_risk, [...]
+   └─ Metadata: version, update_frequency
+```
+
+**Fluxo de Dados:**
+
+```
+[Data Lake] → [Feature Engineering] → [Databricks Feature Store]
+                                             ↓
+                                    [Versionamento]
+                                    [Metadata]
+                                    [Quality Checks]
+                                             ↓
+         ┌──────────────────────┬───────────┬──────────────┐
+         ↓                      ↓           ↓              ↓
+   [Model Training]    [Inference]  [Analytics]   [Monitoring]
+```
+
+### MVP Local: MinIO Feature Store
+
+No **MVP**, não há Feature Store dedicado. Em seu lugar:
+- **Camada "curated"** no MinIO funciona como feature store
+- Features são armazenadas em Parquet com schema explícito
+- Versionamento manual via folder structure (v1/, v2/)
+
+**Estrutura:**
+
+```
+MinIO Bucket: feature-store
+├─ clinical_features/
+│  ├─ v1/
+│  │  └─ data.parquet [schema: age, imc, diabetes_history, ...]
+│  └─ v2/
+│     └─ data.parquet [schema: idem com campos adicionais]
+├─ lifestyle_features/
+│  ├─ v1/
+│  │  └─ data.parquet [schema: avg_weekly_steps, sleep_quality_score, ...]
+│  └─ current → symlink → v1/
+└─ population_features/
+   └─ v1/
+      └─ data.parquet
+```
+
+**Versionamento MVP:**
+- Manual (data engineer escolhe qual versão usar para treino)
+- Sem metadata automático
+- Lineage documentado em código (não em interface)
+
+**Vantagem:**
+- Simples, sem dependências
+- Suficiente para prototipagem
+- Fácil entender mecânica de features
+
+### 15 Lifestyle Features Comportamentais (NOVO!)
+
+Ambos (Cloud e MVP) calcular as mesmas 15 features de wearables:
+
+| ID | Feature | Tipo | Cloud | MVP |
+|----|---------|------|-------|-----|
+| 1 | `avg_weekly_steps` | Float | ✅ Databricks | ✅ Python |
+| 2 | `active_days_ratio` | Float | ✅ Databricks | ✅ Python |
+| 3 | `exercise_consistency` | Float | ✅ Databricks | ✅ Python |
+| 4 | `activity_trend` | Float | ✅ Databricks | ✅ Python |
+| 5 | `avg_resting_hr` | Float | ✅ On-Demand | ✅ On-Demand |
+| 6 | `hrv_avg` | Float | ✅ Databricks | ✅ Python |
+| 7 | `hrv_trend` | Float | ✅ Databricks | ✅ Python |
+| 8 | `avg_sleep_duration` | Float | ✅ Databricks | ✅ Python |
+| 9 | `sleep_quality_score` | Int 0-100 | ✅ Databricks | ✅ Python |
+| 10 | `sleep_consistency` | Float | ✅ Databricks | ✅ Python |
+| 11 | `insomnia_flag` | Bool | ✅ Databricks | ✅ Python |
+| 12 | `stress_level_avg` | Int 0-100 | ✅ Databricks | ✅ Python |
+| 13 | `burnout_risk` | Bool | ✅ Databricks | ✅ Python |
+| 14 | `recovery_days_ratio` | Float | ✅ Databricks | ✅ Python |
+| 15 | `lifestyle_compliance_score` | Int 0-100 | ✅ Databricks | ✅ Python |
+
+Essas features são combinadas com **features clínicas + populacionais** para alimentar os modelos de ML, gerando **15–25% de melhoria na precisão preditiva**.
+
+### Exemplo de Feature Vector Completo
+
+```json
 {
   "patient_id": "550e8400-e29b-41d4-a716-446655440000",
-  "idade": 55,
-  "imc": 28.5,
-  "historico_diabetes": false,
   
-  # Behavior Features (NOVO)
-  "avg_weekly_steps": 7890,
-  "active_days_ratio": 0.86,
-  "sleep_quality_score": 78,
-  "stress_level_avg": 45,
-  "burnout_risk": false,
-  "lifestyle_compliance_score": 82,
+  "clinical_features": {
+    "age": 55,
+    "imc": 28.5,
+    "glucose_avg": 145.2,
+    "historico_diabetes": false,
+    "medication_count": 2,
+    "last_exam_date": "2026-02-01"
+  },
   
-  # Population Features
-  "diabetes_incidence_region": 0.15,
-  "age_group_risk": 0.63,
+  "lifestyle_features": {
+    "avg_weekly_steps": 7890,
+    "active_days_ratio": 0.86,
+    "sleep_quality_score": 78,
+    "sleep_consistency": 0.92,
+    "stress_level_avg": 45,
+    "burnout_risk": false,
+    "lifestyle_compliance_score": 82,
+    "activity_trend": 0.05,
+    "exercise_consistency": 0.88
+  },
   
-  # Timestamp
-  "feature_date": "2026-03-18",
-  "data_completeness": 0.95
+  "population_features": {
+    "diabetes_incidence_region_sp": 0.15,
+    "age_55_risk_baseline": 0.23,
+    "gender_male_risk_factor": 0.08
+  },
+  
+  "metadata": {
+    "feature_date": "2026-03-25",
+    "clinical_completeness": 0.98,
+    "wearable_completeness": 0.95,
+    "feature_store_version": "v2",
+    "computed_at": "2026-03-25T10:05:00Z"
+  }
 }
 ```
 
-Este vetor é enviado aos modelos ML para predição de risco.
+Este vetor é enviado aos modelos ML para predição de risco com consideravelmente maior precisão.
 
 ---
 
@@ -567,31 +761,123 @@ O **Model Registry** mantém:
 
 ---
 
-# 🔟 Camada de Predição
+# 🔟 Camada de Predição (Risk Scoring — OPÇÃO A: Dual Output)
 
-A **Prediction API** executa os modelos em produção.
+A **ML Inference API** executa os modelos em produção com **dois tipos de saída** (OPÇÃO A):
 
-Saída:
+### Output 1: PredicaoRisco Array (Granular)
 
+Array de riscos específicos para cada doença:
+
+```json
+{
+  "predicao_risco": [
+    {
+      "id": "pred_001",
+      "doenca": "Diabetes Tipo 2",
+      "probabilidade": 0.34,
+      "confianca": 0.87,
+      "dataAnalise": "2026-03-25",
+      "features_criticas": ["avg_weekly_steps", "imc", "glicemia_fasting"]
+    },
+    {
+      "id": "pred_002",
+      "doenca": "Síndrome Metabólica",
+      "probabilidade": 0.42,
+      "confianca": 0.79,
+      "dataAnalise": "2026-03-25",
+      "features_criticas": ["imc", "stress_level_avg", "hrv_avg"]
+    },
+    {
+      "id": "pred_003",
+      "doenca": "Hipertensão",
+      "probabilidade": 0.28,
+      "confianca": 0.92,
+      "dataAnalise": "2026-03-25",
+      "features_criticas": ["idade", "hrv_avg", "stress_level_avg"]
+    },
+    {
+      "id": "pred_004",
+      "doenca": "Apneia do Sono",
+      "probabilidade": 0.15,
+      "confianca": 0.65,
+      "dataAnalise": "2026-03-25",
+      "features_criticas": ["sleep_consistency", "insomnia_flag"]
+    }
+  ]
+}
 ```
-risco cardiovascular
-risco diabetes
-risco hipertensão
+
+**Características**:
+- Uma linha por doença com probabilidade individual
+- Usado pelo clínico para priorizar exames
+- Rastreável: sabe qual disease está em risco
+- Explicável: lista features críticas por predicao
+
+### Output 2: HealthScore (Agregado 0-100)
+
+Número único agregando todos os riscos (0= risco muito alto, 100= risco muito baixo):
+
+```json
+{
+  "health_score": {
+    "valor": 71,
+    "dataCalculo": "2026-03-25",
+    "categoria": "Risco Baixo",
+    "metodo_agregacao": "weighted_average",
+    "detalhes": {
+      "score_clinico": 75,
+      "score_comportamental": 68,
+      "score_demografico": 72
+    }
+  }
+}
 ```
 
-Esses resultados alimentam o **Risk Scoring Engine**.
+**Interpretação**:
+- 0-20:   Risco muito alto (protocolo vermelho)
+- 21-40:  Risco alto (acompanhamento)
+- 41-60:  Risco moderado (monitoramento)
+- 61-80:  Risco baixo (baseline) ← Paciente aqui
+- 81-100: Risco muito baixo (prevenção)
+
+**Características**:
+- Número único simples para paciente entender
+- Histórico direto (série temporal: 65 → 70 → 71)
+- Triggers: Se cair <40, alerta clínico
+
+---
+
+### Alimentação do Risk Scoring Engine
+
+Esses resultados **PredicaoRisco + HealthScore** alimentam:
+
+1. **Risk Scoring Engine** — Consolida e valida
+2. **Recommendation Engine** — Gera plano de ação
+3. **Dashboard Médico** — Exibe riscos específicos + score geral
+4. **Material do Paciente** — Mostra HealthScore + insights comportamentais
 
 ---
 
 # 11️⃣ Recommendation Engine
 
-Transforma previsões em ações preventivas.
+Transforma previsões em ações preventivas utilizando **ambos os outputs**:
+
+```
+PredicaoRisco array   →   Define QUAIS exames (prioridade por doença)
+HealthScore           →   Define URGÊNCIA (se score <40, prioridade máxima)
+LifestyleFeatures     →   Define COMO (personalizar conselhos)
+  ↓
+Exames recomendados  (ponderados por PredicaoRisco)
+Consultas agendadas  (prioritárias por HealthScore)
+Orientações personalizadas (baseadas em LifestyleFeatures)
+```
 
 Exemplos:
 
-* recomendar exames
-* recomendar consultas
-* priorizar pacientes de risco
+* Se PredicaoRisco[Diabetes] > 0.30: Recomendar glicemia
+* Se HealthScore < 50: Agendar consulta urgente
+* Se avg_weekly_steps < 3000: Orientar "aumentar atividade"
 
 ---
 
@@ -693,6 +979,77 @@ I --> J
 4. **Features (F)** — Extração de features clínicas + comportamentais
 5. **ML (G, H)** — Treinamento e predição com maior precisão
 6. **Ação (I, J)** — Recomendações e agendamentos para o paciente
+
+---
+
+# 🎯 Notas Arquiteturais
+
+## Estratégia de Armazenamento
+
+Este documento descreve a arquitetura de dados da **Cloud Production** no Azure.
+
+### Dual Storage Strategy
+
+Os dados de wearables são armazenados em **dois locais estratégicos**:
+
+| Armazenamento | Tipo | Finalidade | Retenção |
+|---|---|---|---|
+| **Azure SQL Database** | Relacional (tabelas estruturadas) | Operacional: acesso rápido a dados recentes | 4 semanas |
+| **Azure Data Lake** | Arquivo (Parquet/Delta Lake) | Analítico: histórico completo e feature engineering | 7+ anos |
+
+✅ **Por que dois?**
+- SQL: Queries em tempo real para APIs, dashboards (rápido)
+- Data Lake: Batch processing, histórico para ML (escalável)
+
+### Fluxo de Dados de Wearables
+
+```
+Wearable API (Apple/Google/Fitbit)
+        ↓
+[Wearable Data Connector - OAuth 2.0]
+        ↓
+[Validação, Normalização]
+        ↓
+[Evento via EventHub]
+        ↓
+[Data Anonymization Service] ← Pseudonimização, masking (LGPD)
+        ↓
+Azure SQL Database (transações recentes) + Azure Data Lake (PHI Zone, histórico)
+        ↓
+[Azure Databricks - Feature Engineering]
+        ↓
+[Lifestyle Features Engine] ← Calcula 13+ comportamentais
+        ↓
+[Feature Store] ← Pronto para ML
+        ↓
+Azure ML (Treino/Inferência)
+```
+
+## Decisão: Anonimização Separada na Cloud
+
+A Cloud possui um **Data Anonymization Service** como componente separado:
+- Processa todos os eventos de dados sensíveis
+- Aplica pseudonimização antes de persistência
+- Auditável e LGPD-compliant
+- Não presente no MVP (dados não sensíveis no dev)
+
+## Decisão: Dados Públicos via Batch
+
+Os dados públicos (DATASUS, IBGE, ANS) são integrados via:
+- **Azure Data Factory**: Batch diária (horário fixo)
+- **Armazenamento**: Raw zone do Data Lake
+- **Uso**: Enriquecimento demográfico de análises
+- **Não presente no MVP**: Escopo reduzido
+
+## Decisão: Feature Store Dedicado
+
+A Cloud utiliza **Databricks Feature Store ou Azure ML Feature Store**:
+- Versionamento automático de features
+- Rastreabilidade entre treino e produção
+- Compartilhamento entre modelos
+- No MVP: MinIO/curated layer (FeatureStore simples)
+
+Este documento assume a arquitetura Cloud. Para MVP local, ver compatibilidades listadas em `ARQUITETURA CLOUD - MVP LOCAL DOCKER.md`.
 
 ---
 

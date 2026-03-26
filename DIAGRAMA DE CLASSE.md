@@ -214,11 +214,94 @@ LifestyleFeatures --> WearableSleep
 LifestyleFeatures --> WearableStress
 
 Recomendacao --> PredicaoRisco
+Recomendacao --> ClinicalGuideline
 
 Medico "1" --> "*" Consulta
 
 Consulta --> Agenda
 Consulta --> "0..*" Exame
+
+%% COMPONENTES DE ML E INFRAESTRUTURA
+
+class RiskScore {
+  +id: UUID
+  +paciente_id: UUID
+  +scoreValue: Float
+  +scoreType: String
+  +riskLevel: String
+  +calculatedAt: DateTime
+  +modelVersion: String
+  +confidenceScore: Float
+}
+
+class FeatureStore {
+  +id: UUID
+  +featureName: String
+  +featureValue: Float
+  +timestamp: DateTime
+  +dataSource: String
+  +computationMethod: String
+  +isActive: Boolean
+}
+
+class ModelRegistry {
+  +id: UUID
+  +modelName: String
+  +modelVersion: String
+  +modelType: String
+  +trainedAt: DateTime
+  +performance: Dict
+  +hyperparameters: Dict
+  +isProduction: Boolean
+  +registry_metadata: Dict
+}
+
+class ClinicalGuideline {
+  +id: UUID
+  +guidelineCode: String
+  +doenca: String
+  +protocoloRastreamento: String
+  +critériosExame: String
+  +frequênciaExame: String
+  +contraindications: List
+  +referenceSource: String
+  +lastUpdated: DateTime
+}
+
+class WearableSync {
+  +id: UUID
+  +paciente_id: UUID
+  +plataforma: String
+  +lastSync: DateTime
+  +nextSync: DateTime
+  +syncStatus: String
+  +dataPointsSync: Int
+  +errorCount: Int
+  +tokenRefreshed: DateTime
+}
+
+%% RELACIONAMENTOS
+
+PredicaoRisco --> RiskScore
+RiskScore --> HealthScore
+
+FeatureStore --> LifestyleFeatures
+FeatureStore --> PerfilClinico
+
+ModeloML --> ModelRegistry
+ModelRegistry --> FeatureStore
+
+WearableDevice --> WearableSync
+WearableSync --> WearableHeartRate
+WearableSync --> WearableActivity
+WearableSync --> WearableSleep
+WearableSync --> WearableStress
+
+ClinicalGuideline --> PredicaoRisco
+
+Paciente "1" --> "*" RiskScore
+Paciente "1" --> "*" WearableSync
+Paciente "1" --> "1" FeatureStore
 ````
 
 ---
@@ -611,7 +694,122 @@ Recomendacao --> PredicaoRisco
 
 ---
 
-# 🔄 Fluxo de Dados: Do Wearable ao Modelo ML
+# � Componentes de ML e Infraestrutura (OPÇÃO A)
+
+## 🎯 RiskScore
+
+Classe intermediária que consolida múltiplos scores de risco em um único valor agregado.
+
+**Atributos**:
+- scoreValue: Valor numérico do score
+- scoreType: Tipo de score (global, por doença, contextual)
+- riskLevel: Categoria (muito alto, alto, moderado, baixo, muito baixo)
+- modelVersion: Qual versão do modelo gerou este score
+- confidenceScore: Confiança do score (0-1)
+
+**Relacionimentos**:
+- Agrega múltiplas `PredicaoRisco`
+- Relacionado a `HealthScore` para contextualização
+
+**Uso**: Intermediário entre PredicaoRisco (granular) e HealthScore (agregado).
+
+---
+
+## 📦 FeatureStore
+
+Sistema centralizado de features engenheirizadas, utilizado por todos os modelos ML.
+
+**Atributos**:
+- featureName: Nome da feature (ex: "avg_weekly_steps")
+- featureValue: Valor calculado
+- dataSource: Origem (wearable, clínico, populacional)
+- computationMethod: Como foi calculada
+- isActive: Se está sendo usada
+
+**Responsabilidades**:
+- Armazena 15 lifestyle features de forma centralizada
+- Permite reutilização por múltiplos modelos
+- Controla versões de features (ex: avg_weekly_steps v1, v2)
+- Casa de verdade para feature engineering
+
+**Uso**: Todo modelo ML consulta FeatureStore, não recalcula.
+
+---
+
+## 🗂️ ModelRegistry
+
+Registro centralizado de todos os modelos ML em produção e experimentação.
+
+**Atributos**:
+- modelName: Nome descritivo
+- modelVersion: Versão semântica (v1.2.3)
+- modelType: Tipo (RandomForest, XGBoost, NeuralNetwork)
+- trainedAt: Quando foi treinado
+- performance: Métricas (precision, recall, AUC)
+- hyperparameters: Configuração do modelo
+- isProduction: Flag para saber qual usar
+
+**Responsabilidades**:
+- Rastreia histórico completo de modelos
+- Permite rollback se novo modelo falhar
+- Documenta performance e hyperparameters
+- Governa qual modelo usar em produção
+
+**Uso**: Antes de usar um modelo, verifica ModelRegistry.
+
+---
+
+## 📋 ClinicalGuideline
+
+Diretrizes clínicas estruturadas para cada doença suportada.
+
+**Atributos**:
+- guidelineCode: Código único (ex: "HTN_2024_BR")
+- doenca: Doença alvo (ex: "Hipertensão")
+- protocoloRastreamento: Qual exame fazer
+- critériosExame: Quando fazer (idade, valores)
+- frequênciaExame: Com que frequência (anual, a cada 2 anos)
+- contraindications: Quando NÃO fazer
+- referenceSource: Origem (SBC, ADA, OMS)
+- lastUpdated: Quando foi atualizado
+
+**Responsabilidades**:
+- Valida clinicamente cada risco recomendado
+- Garante conformidade com protocolos atualizados
+- Previne recomendações inadequadas
+- Auditável: referência explícita
+
+**Uso**: ClinicalGuideline valida PredicaoRisco antes de Recomendacao.
+
+---
+
+## 🔄 WearableSync
+
+Orquestra a sincronização de dados wearables de forma segura e confiável.
+
+**Atributos**:
+- paciente_id: Qual paciente
+- plataforma: Qual wearable (Apple, Fitbit, etc)
+- lastSync: Último sincronização com sucesso
+- nextSync: Próxima sincronização planejada
+- syncStatus: Estado (pending, syncing, success, failed)
+- dataPointsSync: Quantos pontos foram sincronizados
+- errorCount: Quantas tentativas falharam
+- tokenRefreshed: Quando token OAuth foi renovado
+
+**Responsabilidades**:
+- Recupera token do Key Vault
+- Consulta plataforma wearable
+- Valida e normaliza dados
+- Detecta anomalias
+- Armazena em WearableX tables
+- Registra auditoria
+
+**Uso**: Executa diariamente (OPÇÃO A - Batch Only).
+
+---
+
+# �🔄 Fluxo de Dados: Do Wearable ao Modelo ML
 
 ```
 Dispositivo Wearable (Apple Watch, Fitbit, etc)
@@ -644,3 +842,99 @@ A integração de **wearables em modelos preditivos** oferece:
 ✅ **LGPD Compliant** — OAuth, consentimento, criptografia  
 ✅ **Escalável** — Múltiplas plataformas suportadas  
 ✅ **Explicável** — Clínico entende decisões da IA
+
+---
+
+# 🎯 Notas Arquiteturais
+
+## Escopo do Diagrama
+
+Este diagrama representa as **classes de domínio** do CarePredict:
+- Entidades clínicas e comportamentais
+- Relacionamentos entre pacientes e dados
+- Modelo de recomendações e predições
+
+## Classes Não Incluídas (Infraestrutura)
+
+As seguintes classes/componentes são **intencionalmente ausentes** pois pertencem à infraestrutura:
+- `FeatureStore` — armazenamento de features (implementação específica de plataforma)
+- `ModelRegistry` — registro de modelos (Azure ML, Databricks, etc)
+- `RiskScoringEngine` — motor de scoring (algoritmos, não domínio)
+- `ClinicalGuidelines` — regras de negócio (separadas em BL)
+- `Anonymization` — serviço de LGPD
+- `WearableConnector` — integração externa (API)
+
+**Separação de responsabilidades:**
+- Este diagrama: O QUE o sistema sabe (dados de domínio)
+- Diagrama de Sequência: COMO o sistema funciona (componentes)
+- Diagrama de Arquitetura: ONDE os componentes vivem (infraestrutura)
+
+## Decisões de Modelagem
+
+### 1. Dual PredicaoRisco + HealthScore
+
+Mantidas ambas as classes:
+- `PredicaoRisco`: Detalhado por doença (array de {doença, probabilidade})
+- `HealthScore`: Agregado único (0-100)
+
+Justificativa: Permite tanto detalhamento clínico quanto resumo para usuário final.
+
+### 2. LifestyleFeatures como Classe Explícita
+
+Adicionada como entidade porque:
+- Ponte entre dados brutos de wearables e modelos ML
+- Rastreabilidade: qual feature foi usada em qual predição
+- Versionamento: features mudam ao longo do tempo
+
+### 3. WearableDevice com Tokens Armazenados
+
+Campos especiais:
+- `accessTokenVaultKey`, `refreshTokenVaultKey`: Referências ao Azure Key Vault (não tokens em texto)
+- `tokenExpiry`: Controle de expiração
+- `lastSync`: Auditoria de sincronizações
+- `isActive`: Permissão revogada (LGPD)
+
+Representam o fluxo OAuth 2.0 completo.
+
+### 4. Modelo Suporta Múltiplas Plataformas
+
+Enum `WearablePlataforma`:
+```
+AppleHealth, GoogleFit, Fitbit, Garmin, Oura
+```
+
+Cada paciente pode ter múltiplos `WearableDevice` (um por plataforma).
+
+## Extensões Potenciais
+
+Se você desejar um diagrama **completo com infraestrutura**, adicione:
+
+```mermaid
+class FeatureStore {
+  +id: UUID
+  +name: String
+  +version: String
+  +features: List~Feature~
+}
+
+class ModelRegistry {
+  +id: UUID
+  +modelName: String
+  +version: String
+  +metrics: Metrics
+  +featuresUsed: List~String~
+}
+
+class RiskScoringEngine {
+  +calculateScore(PredicaoRisco): HealthScore
+}
+
+class Anonymization {
+  +pseudonymize(data): PseudonymizedData
+  +decrypt(key): OriginalData
+}
+```
+
+Mas esses **não pertencem ao diagrama de domínio principal**.
+
+---
