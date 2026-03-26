@@ -849,20 +849,24 @@ A integração de **wearables em modelos preditivos** oferece:
 
 ## Escopo do Diagrama
 
-Este diagrama representa as **classes de domínio** do CarePredict:
-- Entidades clínicas e comportamentais
+Este diagrama representa um modelo **completo (OPÇÃO A)** do CarePredict:
+- Entidades de domínio clínico e comportamental
 - Relacionamentos entre pacientes e dados
-- Modelo de recomendações e predições
+- Componentes de apoio de ML/infraestrutura essenciais para rastreabilidade
 
-## Classes Não Incluídas (Infraestrutura)
+## Classes de Infraestrutura Incluídas (OPÇÃO A)
 
-As seguintes classes/componentes são **intencionalmente ausentes** pois pertencem à infraestrutura:
-- `FeatureStore` — armazenamento de features (implementação específica de plataforma)
+As seguintes classes/componentes estão **incluídas intencionalmente** para alinhamento com a arquitetura cloud:
+- `FeatureStore` — armazenamento e versionamento de features
 - `ModelRegistry` — registro de modelos (Azure ML, Databricks, etc)
-- `RiskScoringEngine` — motor de scoring (algoritmos, não domínio)
-- `ClinicalGuidelines` — regras de negócio (separadas em BL)
-- `Anonymization` — serviço de LGPD
-- `WearableConnector` — integração externa (API)
+- `RiskScore` — camada intermediária de score entre risco granular e score agregado
+- `ClinicalGuideline` — base estruturada de protocolos clínicos
+- `WearableSync` — orquestração de sincronização e auditoria de wearables
+
+Os serviços operacionais de infraestrutura permanecem fora do escopo do diagrama de classe:
+- `AnonymizationService`
+- `WearableConnector`
+- `PopulationDataService`
 
 **Separação de responsabilidades:**
 - Este diagrama: O QUE o sistema sabe (dados de domínio)
@@ -907,7 +911,7 @@ Cada paciente pode ter múltiplos `WearableDevice` (um por plataforma).
 
 ## Extensões Potenciais
 
-Se você desejar um diagrama **completo com infraestrutura**, adicione:
+Para aprofundar o modelo, você pode adicionar classes técnicas de implementação específica (não conceituais), por exemplo:
 
 ```mermaid
 class FeatureStore {

@@ -448,8 +448,8 @@ Este MVP **segue intencionalmente uma arquitetura simplificada** da Cloud, com a
 |--------|-------|-----|
 | Feature Engineering | Azure Databricks | Wearable Sync Worker (Python) |
 | Anonimização | Data Anonymization Service | Ausente (dados não sensíveis) |
-| Dados Públicos | Azure Data Factory (batch) | Ausente (não no escopo MVP) |
-| Mode de Sync | Batch + Streaming Hybrid | Batch apenas (cron diário) |
+| Dados Públicos | PopulationDataService (On-Demand + cache 24h) | Ausente (não no escopo MVP) |
+| Modo de Sync | Batch Only (cron diário) | Batch apenas (cron diário) |
 
 ✅ **Decisão**: MVP simplificado, Cloud robusto. Lógica de features é identica.
 

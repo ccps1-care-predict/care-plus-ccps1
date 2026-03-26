@@ -482,12 +482,12 @@ Cada fluxo detalha componentes, integrations e armazenamentos:
 
 O MVP local (Docker Compose) **segue o mesmo padrão batch**:
 
-| Fluxo | Cloud (Batch) | MVP (Batch) |
+| Fluxo | Cloud (Batch + On-Demand) | MVP (Batch) |
 |-------|-------|-----|
 | **1. OAuth 2.0** | Real (Apple/Google/Fitbit) | Mockado (OAUTH_MOCK_MODE=true) |
 | **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
 | **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
-| **Dados Públicos** | Ingestão via DataFactory (batch) | Não presente |
+| **Dados Públicos** | PopulationDataService On-Demand + cache 24h | Não presente |
 | **KeyVault** | Azure Key Vault | Arquivo .env |
 | **Latência de Features** | ~24h (atualizado diariamente) | ~24h (atualizado diariamente) |
 
@@ -535,7 +535,7 @@ Ao migrar MVP → Cloud:
 1. Trocar Docker Postgres por Azure SQL (schema igual)
 2. Trocar MinIO por Azure Data Lake (mesma estrutura de camadas)
 3. Ativar AnonymizationService (novo componente)
-4. Ativar Azure DataFactory para dados públicos (novo componente)
+4. Ativar PopulationDataService On-Demand com cache 24h (novo componente)
 5. Ativar OAuth real para wearables (configuração, não código)
 
 **Nenhuma reescrita de lógica de negócio.**

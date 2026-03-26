@@ -1298,12 +1298,12 @@ J --> F
 - Acesso: Batch processing, analytics, feature engineering
 - Retenção: Histórico completo (7+ anos para compliance)
 
-### Mode de Sincronização
+### Modo de Sincronização
 
-✅ **Batch + Streaming Hybrid**
-- **Batch Diário**: Reconciliação de dados completa, feature engineering pesado (via Wearable Sync Worker)
-- **Streaming Opcional**: Eventos críticos em tempo real (FC elevada, queda de atividade)
-- Fallback: Se streaming falha, batch do dia recupera dados
+✅ **Batch Only (OPÇÃO A)**
+- **Batch Diário**: Reconciliação completa e feature engineering (via Wearable Sync Worker)
+- **Sem Streaming**: EventHub não participa do fluxo de ingestão de wearables
+- **Previsível**: Janela diária padronizada para processamento e auditoria
 
 ### Componentes críticos
 
@@ -1315,9 +1315,10 @@ J --> F
 - Versionamento automático de features
 - Rastreabilidade entre treino e produção
 
-✅ **Dados Públicos**: Batch diária via DataFactory
-- Integração com DATASUS, IBGE, ANS
-- Enriquecimento de análise demográfica
+✅ **Dados Públicos**: On-Demand com cache (OPÇÃO B)
+- Consulta durante análise preventiva por idade/gênero/região
+- Cache TTL 24h para reduzir latência e chamadas externas
+- Integração com DATASUS, IBGE e ANS para enriquecimento demográfico
 
 ---
 

@@ -52,7 +52,7 @@ subgraph Ingestion["Camada de Ingestão"]
 API[APIs Clínicas]
 BatchETL[ETL Batch — Diário]
 WearableIngest["Wearable Data Connector<br/>(OAuth + Batch Sync)"]
-PublicAPI[Ingestão de Dados Públicos<br/>(Batch)]
+PublicAPI[Ingestão de Dados Públicos<br/>(On-Demand + Cache 24h)]
 
 end
 
@@ -308,7 +308,9 @@ Esses dados ajudam a identificar:
 
 # 2️⃣ Camada de Ingestão
 
-Responsável por trazer dados para a plataforma (OPÇÃO A — Batch Only).
+Responsável por trazer dados para a plataforma com dois modos complementares:
+- Wearables e dados clínicos: **Batch Only (OPÇÃO A)**
+- Dados públicos demográficos: **On-Demand com cache (OPÇÃO B)**
 
 Métodos de ingestão:
 
@@ -324,9 +326,10 @@ Sincronização uma vez ao dia (cron configurável) de dados wearables:
 - Sumário de exercícios (últimas 24h)
 - Frequência cardíaca agregada (últimas 24h)
 
-**Ingestão Pública (Batch)**
+**Ingestão Pública (On-Demand + Cache 24h)**
 
-Dados epidemiológicos governamentais (semanal/mensal).
+Dados epidemiológicos governamentais são buscados durante a análise preventiva,
+com cache por 24h para minimizar latência e reduzir chamadas externas.
 
 **Fluxo de Wearables (OPÇÃO A)**:
 
@@ -1033,12 +1036,12 @@ A Cloud possui um **Data Anonymization Service** como componente separado:
 - Auditável e LGPD-compliant
 - Não presente no MVP (dados não sensíveis no dev)
 
-## Decisão: Dados Públicos via Batch
+## Decisão: Dados Públicos On-Demand (OPÇÃO B)
 
 Os dados públicos (DATASUS, IBGE, ANS) são integrados via:
-- **Azure Data Factory**: Batch diária (horário fixo)
-- **Armazenamento**: Raw zone do Data Lake
-- **Uso**: Enriquecimento demográfico de análises
+- **PopulationDataService**: consulta On-Demand durante a análise preventiva
+- **Cache 24h**: Redis/Memory para reduzir latência e custo de chamadas
+- **Uso**: Enriquecimento demográfico contextual (idade/gênero/região)
 - **Não presente no MVP**: Escopo reduzido
 
 ## Decisão: Feature Store Dedicado
