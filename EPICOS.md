@@ -278,17 +278,19 @@ Story Points: **8**
 
 Checklist:
 
-Calcular as 13 lifestyle features:
+Calcular as 15 lifestyle features:
 
 * `avg_weekly_steps` — média de passos dos últimos 7 dias
 * `sleep_quality_score` — score 0-100 baseado em duração e composição
 * `sleep_consistency` — regularidade de horários de sono
 * `insomnia_flag` — média < 6h nos últimos 7 dias
 * `stress_level_avg` — média de estresse semanal
+* `stress_variability` — variabilidade de estresse no período
 * `burnout_risk` — estresse > 70 E sono < 6h
 * `recovery_days_ratio` — % de dias com boa recuperação
 * `avg_resting_hr` — FC em repouso média
 * `hrv_avg` — variabilidade da FC média
+* `heart_rate_variability_low_risk` — indicador de risco baixo por HRV
 * `active_days_ratio` — % de dias com atividade registrada
 * `exercise_consistency` — regularidade de sessões
 * `activity_trend` — tendência crescente/decrescente
@@ -340,7 +342,7 @@ Story Points: **8**
 
 Checklist:
 
-* Combinar features clínicas + 13 lifestyle features
+* Combinar features clínicas + 15 lifestyle features
 * Retreinar modelo com feature set completo
 * Comparar métricas entre modelo clínico-only e clínico+wearable
 * Documentar ganho de precisão obtido (target: 15–25%)
@@ -378,9 +380,9 @@ Story Points: **5**
 Checklist:
 
 * Criar serviço `risk-scoring-engine`
-* Calcular score clínico por paciente
-* Calcular score comportamental a partir de lifestyle features
-* Gerar Health Score consolidado (clínico + comportamental)
+* Gerar `PredicaoRisco[]` por doença (com probabilidade e confiança)
+* Calcular `HealthScore` agregado (0-100)
+* Persistir saída dual com versão de modelo e timestamp
 
 ---
 
@@ -393,8 +395,23 @@ Checklist:
 * Definir regras clínicas
 * Mapear exames preventivos por perfil de risco
 * Gerar recomendações contextualizadas com dados de estilo de vida
+* Priorizar recomendações usando `PredicaoRisco[]` + `HealthScore`
 * Gerar orientações comportamentais quando `burnout_risk=true` ou `insomnia_flag=true`
 * Gerar metas de atividade baseadas em `avg_weekly_steps` e `active_days_ratio`
+
+---
+
+### Card: Criar Clinical Guidelines Validator (Cloud)
+
+Story Points: **5**
+
+Checklist:
+
+* Criar serviço `clinical-guidelines-validator`
+* Validar predições por protocolos clínicos (idade, perfil e contraindicações)
+* Aplicar threshold clínico mínimo para riscos recomendáveis
+* Retornar `predicoes_validadas` e `predicoes_rejeitadas` com motivo
+* Garantir trilha auditável para recomendações finais
 
 ---
 
@@ -405,6 +422,7 @@ Story Points: **5**
 Checklist:
 
 * Backend chamar risk engine
+* Backend chamar clinical guidelines validator (cloud)
 * Backend chamar recommendation engine
 * Persistir recomendações (clínicas e comportamentais)
 * Associar recomendação à fonte de dados (clínica vs. wearable)
@@ -600,7 +618,21 @@ Checklist:
 * Testes de contrato para cada plataforma (Apple, Google, Fitbit)
 * Testes de tolerância a falhas (timeout, token expirado, API indisponível)
 * Testes do Sync Worker com dados sintéticos
-* Testes das 13 lifestyle features com cenários conhecidos
+* Testes das 15 lifestyle features com cenários conhecidos
+
+---
+
+### Card: Implementar PopulationDataService On-Demand (Cloud)
+
+Story Points: **5**
+
+Checklist:
+
+* Criar serviço `population-data-service`
+* Consultar DATASUS, IBGE e ANS sob demanda por idade/gênero/região
+* Implementar cache com TTL de 24h
+* Integrar com fluxo de análise preventiva (FeatureEngineer/API)
+* Criar fallback para indisponibilidade de fonte externa
 
 ---
 
@@ -612,7 +644,8 @@ Checklist:
 
 * Mapear variáveis de ambiente do `.env` para Azure Key Vault
 * Desligar `OAUTH_MOCK_MODE` e apontar para OAuth real
-* Configurar conexão com Azure Event Hub
+* Garantir cron de sincronização Batch Only em produção
+* Configurar PopulationDataService On-Demand com cache (Redis/Memory)
 * Documentar checklist de migração do MVP local para Azure
 
 ---
