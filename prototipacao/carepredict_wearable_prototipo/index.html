@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarePredict Wearable</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="watch-shell">
+      <div class="watch-frame">
+        <div class="watch-topbar">
+          <span id="time-label">12:45</span>
+          <span class="sync-dot"></span>
+        </div>
+
+        <section class="screen active" id="home">
+          <div class="screen-header">
+            <h1>CarePredict</h1>
+            <p>Resumo rápido</p>
+          </div>
+
+          <div class="hero-score">
+            <div class="ring">
+              <span>71</span>
+              <small>Score</small>
+            </div>
+            <div class="hero-meta">
+              <div class="metric-row"><span>❤️</span><strong>72 bpm</strong></div>
+              <div class="metric-row"><span>💤</span><strong>6h45</strong></div>
+              <div class="metric-row"><span>🚶</span><strong>7.890</strong></div>
+            </div>
+          </div>
+
+          <div class="alert-card warning">
+            <strong>Atividade baixa</strong>
+            <span>Você está abaixo da meta diária.</span>
+          </div>
+
+          <div class="quick-actions">
+            <button class="mini-btn" data-go="activity">Atividade</button>
+            <button class="mini-btn" data-go="alerts">Alertas</button>
+            <button class="mini-btn" data-go="recommendation">Ação</button>
+          </div>
+        </section>
+
+        <section class="screen" id="heartrate">
+          <div class="screen-header">
+            <h1>Frequência Cardíaca</h1>
+            <p>Últimas 24h</p>
+          </div>
+
+          <div class="big-number">72 <small>bpm</small></div>
+          <div class="chart line-chart">
+            <svg viewBox="0 0 260 90" preserveAspectRatio="none">
+              <polyline points="0,55 20,48 45,52 70,42 95,46 120,39 145,44 170,34 195,38 220,30 260,36"
+                fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="stats-list">
+            <div><span>FC repouso</span><strong>58</strong></div>
+            <div><span>Status</span><strong class="ok-text">Normal</strong></div>
+          </div>
+        </section>
+
+        <section class="screen" id="sleep">
+          <div class="screen-header">
+            <h1>Sono</h1>
+            <p>Última noite</p>
+          </div>
+
+          <div class="big-number">6h45</div>
+          <div class="sleep-bars">
+            <span class="active"></span>
+            <span class="active"></span>
+            <span class="active"></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div class="alert-card warning">
+            <strong>Qualidade média</strong>
+            <span>Sono irregular nos últimos dias.</span>
+          </div>
+
+          <button class="action-btn" data-go="recommendation">Ver recomendação</button>
+        </section>
+
+        <section class="screen" id="activity">
+          <div class="screen-header">
+            <h1>Atividade</h1>
+            <p>Meta diária</p>
+          </div>
+
+          <div class="big-number">7.890</div>
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Meta 10.000</span>
+              <strong>79%</strong>
+            </div>
+            <div class="progress-bar"><span style="width:79%"></span></div>
+          </div>
+
+          <div class="stats-list">
+            <div><span>Dias ativos</span><strong>3</strong></div>
+            <div><span>Status</span><strong class="warn-text">Abaixo da meta</strong></div>
+          </div>
+        </section>
+
+        <section class="screen" id="stress">
+          <div class="screen-header">
+            <h1>Estresse</h1>
+            <p>Estado atual</p>
+          </div>
+
+          <div class="emoji-meter">😰</div>
+          <div class="big-number">45</div>
+
+          <div class="stats-list">
+            <div><span>Status</span><strong class="warn-text">Moderado</strong></div>
+            <div><span>Tendência</span><strong>Estável</strong></div>
+          </div>
+
+          <button class="action-btn" data-go="recommendation">Respirar agora</button>
+        </section>
+
+        <section class="screen" id="alerts">
+          <div class="screen-header">
+            <h1>Alertas</h1>
+            <p>Hoje</p>
+          </div>
+
+          <div class="stack">
+            <div class="alert-card warning">
+              <strong>Atividade baixa</strong>
+              <span>Você ainda não bateu a meta.</span>
+            </div>
+            <div class="alert-card warning">
+              <strong>Sono irregular</strong>
+              <span>Seu padrão oscilou essa semana.</span>
+            </div>
+            <div class="alert-card success">
+              <strong>FC normal</strong>
+              <span>Sem sinais de anomalia.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="recommendation">
+          <div class="screen-header">
+            <h1>Recomendação</h1>
+            <p>Nudge do dia</p>
+          </div>
+
+          <div class="rec-card">
+            <div class="rec-icon">🚶</div>
+            <strong>Caminhe por 10 min</strong>
+            <span>Motivo: atividade abaixo da média e ganho potencial no score.</span>
+          </div>
+
+          <div class="button-stack">
+            <button class="action-btn">Começar agora</button>
+            <button class="ghost-btn" data-go="sync">Lembrar depois</button>
+          </div>
+        </section>
+
+        <section class="screen" id="sync">
+          <div class="screen-header">
+            <h1>Sincronização</h1>
+            <p>Status do dispositivo</p>
+          </div>
+
+          <div class="sync-state">
+            <div class="pulse"></div>
+            <strong>Conectado</strong>
+            <span>Última sync: 12:40</span>
+          </div>
+
+          <div class="stats-list">
+            <div><span>Plataforma</span><strong>Wear OS</strong></div>
+            <div><span>Status</span><strong class="ok-text">Online</strong></div>
+          </div>
+
+          <button class="action-btn">Sincronizar agora</button>
+        </section>
+
+        <nav class="bottom-nav">
+          <button class="nav-btn active" data-go="home">⌂</button>
+          <button class="nav-btn" data-go="heartrate">❤️</button>
+          <button class="nav-btn" data-go="sleep">💤</button>
+          <button class="nav-btn" data-go="activity">🚶</button>
+          <button class="nav-btn" data-go="stress">😰</button>
+        </nav>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <h2>CarePredict Wearable</h2>
+      <p>Protótipo navegável da experiência no relógio.</p>
+
+      <div class="panel-card">
+        <h3>Telas</h3>
+        <div class="panel-buttons">
+          <button data-go="home">Home</button>
+          <button data-go="heartrate">FC</button>
+          <button data-go="sleep">Sono</button>
+          <button data-go="activity">Atividade</button>
+          <button data-go="stress">Estresse</button>
+          <button data-go="alerts">Alertas</button>
+          <button data-go="recommendation">Recomendação</button>
+          <button data-go="sync">Sync</button>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Objetivo</h3>
+        <ul>
+          <li>Visão rápida do estado de saúde</li>
+          <li>Alertas simples e acionáveis</li>
+          <li>Nudges preventivos de baixa fricção</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
