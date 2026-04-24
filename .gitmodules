@@ -1,15 +1,20 @@
 [submodule "modules/api"]
 	path = modules/api
 	url = https://github.com/ccps1-care-predict/care-plus-api.git
+	branch = main
 [submodule "modules/spa"]
 	path = modules/spa
 	url = https://github.com/ccps1-care-predict/care-plus-spa.git
+	branch = main
 [submodule "modules/services"]
 	path = modules/services
 	url = https://github.com/ccps1-care-predict/care-plus-services.git
+	branch = main
 [submodule "modules/data"]
 	path = modules/data
 	url = https://github.com/ccps1-care-predict/care-plus-data.git
+	branch = main
 [submodule "modules/ml"]
 	path = modules/ml
 	url = https://github.com/ccps1-care-predict/care-plus-ml.git
+	branch = main
