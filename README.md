@@ -166,48 +166,53 @@ Documento completo: [ARQUITERUA CLOUD.md](ARQUITERUA%20CLOUD.md)
 
 ## Arquitetura MVP Local (Docker)
 
-Para acelerar validacoes tecnicas e funcionais, o projeto tambem possui uma arquitetura de MVP local baseada em Docker Compose.
+Para acelerar validacoes tecnicas e funcionais, o projeto possui uma arquitetura local baseada em Docker Compose.
 
-Essa versao contempla:
+O estado atual executavel contempla:
 
-- frontend Angular, backend API e servicos de recomendacao
-- inferencia de ML local
-- persistencia com Postgres, MinIO e Redis
-- fluxo ponta a ponta sem dependencia inicial de cloud publica
+- frontend Angular em `modules/spa`
+- backend FastAPI em `modules/api`
+- migrations Alembic executadas antes da API
+- Postgres 16 como banco transacional
+- seed de dados mockados opcional, acionado por profile
+
+Os documentos de arquitetura cloud/local continuam servindo como direcao evolutiva para os servicos auxiliares de ML, wearables, data lake, cache e recomendacao.
 
 Documento completo: [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md)
 
 ## Execucao Local
 
-O repositório possui um [docker-compose.yml](docker-compose.yml) na raiz com a topologia do MVP local descrita na arquitetura Docker.
+O repositorio possui um [docker-compose.yml](docker-compose.yml) na raiz que inclui o compose da API em `modules/api/docker-compose.yml` e adiciona a SPA Angular.
 
 ### Pre-requisitos
 
 - Docker 24+ instalado
 - Docker Compose V2 habilitado (`docker compose version`)
-- Portas livres no host (modo base): `4200`, `5050`, `5432`, `6379`, `8080`, `9000` e `9001`
-- Portas adicionais no perfil completo (`full-mvp`): `8001`, `8002`, `8003`, `8004`, `8005`, `8006`, `8007`, `8008`
+- Portas livres no host: `4200`, `5432` e `8080`
+- Para desenvolvimento sem Docker, Node/NPM para a SPA e Python 3.12 para a API
 
 ### Arquivos utilizados
 
-- [docker-compose.yml](docker-compose.yml) — orquestra os containers do MVP local
-- [.env.example](.env.example) — modelo de variáveis de ambiente
+- [docker-compose.yml](docker-compose.yml) — compose raiz; inclui API e SPA
+- [modules/api/docker-compose.yml](modules/api/docker-compose.yml) — API, migrations, Postgres e seed opcional
+- [modules/api/.env](modules/api/.env) — variaveis usadas pela API no Docker
+- [.env.example](.env.example) — modelo historico de variaveis do projeto
 - [ARQUITETURA CLOUD - MVP LOCAL DOCKER.md](ARQUITETURA%20CLOUD%20-%20MVP%20LOCAL%20DOCKER.md) — referência arquitetural do ambiente local
 
 ### Configuracao inicial
 
-1. Copie o arquivo de exemplo de variáveis:
+1. Confirme o arquivo de ambiente da API:
 
 ```bash
-cp .env.example .env
+cat modules/api/.env
 ```
 
-2. Ajuste os valores do arquivo `.env` se necessário, principalmente:
+2. Ajuste os valores se necessario, principalmente:
 
-- credenciais do Postgres
-- credenciais do MinIO
-- `JWT_SECRET`
-- `SYNC_INTERVAL_SECONDS`
+- `DATABASE_URL`
+- `REDIS_URL`, se usado por integrações futuras
+- `SECRET_KEY`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
 
 ### Subindo o ambiente
 
@@ -217,17 +222,28 @@ Para iniciar os serviços principais:
 docker compose up --build
 ```
 
-Para iniciar também o PgAdmin no perfil de desenvolvimento:
-
-```bash
-docker compose --profile dev up --build
-```
-
 Para subir em modo detached:
 
 ```bash
 docker compose up --build -d
 ```
+
+Para executar tambem o seed de dados mockados, use o profile `mockdata`:
+
+```bash
+docker compose --profile mockdata up --build
+```
+
+O seed roda no servico `mockdata`, depois das migrations, e popula usuarios, medicos, pacientes, recomendacoes, slots e agendamentos de exemplo.
+
+Credenciais criadas pelo seed:
+
+- senha unica: `Demo@123456`
+- medico A: `medico.demo@careplus.local`
+- medico B: `medico.b@careplus.local`
+- paciente A: `paciente.demo@careplus.local`
+- paciente B: `paciente.risco@careplus.local`
+- paciente C: `paciente.estavel@careplus.local`
 
 ### Parando o ambiente
 
@@ -243,46 +259,28 @@ docker compose down -v
 
 ### Servicos previstos no MVP local
 
-Servicos do modo base (`docker compose up --build`):
+Servicos atuais do modo base (`docker compose up --build`):
 
 | Serviço | Porta no host | Função |
 |---|---:|---|
 | frontend-angular | 4200 | Portal web Angular |
-| backend-api | 8080 | API principal do sistema |
-| postgres | 5432 | Banco transacional |
-| redis | 6379 | Cache e filas leves |
-| minio | 9000 | Data lake local |
-| minio console | 9001 | Console web do MinIO |
-| pgadmin | 5050 | Administração do Postgres (opcional) |
+| api | 8080 | API principal FastAPI |
+| migrations | - | Aplica migrations Alembic antes da API |
+| db | 5432 | Banco Postgres |
 
-Servicos adicionais no perfil completo (`docker compose --profile full-mvp up --build`):
+Servico adicional no profile `mockdata`:
 
 | Serviço | Porta no host | Função |
 |---|---:|---|
-| ml-inference-service | 8001 | Inferência de modelos locais |
-| wearable-connector | 8002 | Integração OAuth mockada com wearables |
-| wearable-mock-apis | 8003 | Simulação de Apple Health, Google Fit e Fitbit |
-| risk-scoring-engine | 8004 | Cálculo de risco clínico/comportamental |
-| recommendation-engine | 8005 | Geração de recomendações preventivas |
-| scheduling-service | 8006 | Orquestração de agenda, slots e atualização de conclusão |
-| clinical-guidelines-validator | 8007 | Validação de regras clínicas |
-| population-data-service | 8008 | Contexto populacional por perfil |
+| mockdata | - | Executa `python scripts/seed_mock_data.py` |
 
 ### Enderecos locais esperados
 
 - Frontend: `http://localhost:4200`
 - Backend API: `http://localhost:8080`
-- ML Inference: `http://localhost:8001`
-- Wearable Connector: `http://localhost:8002`
-- Wearable Mock APIs: `http://localhost:8003`
-- Risk Scoring Engine: `http://localhost:8004`
-- Recommendation Engine: `http://localhost:8005`
-- Scheduling Service: `http://localhost:8006`
-- Clinical Guidelines Validator: `http://localhost:8007`
-- Population Data Service: `http://localhost:8008`
-- MinIO API: `http://localhost:9000`
-- MinIO Console: `http://localhost:9001`
-- PgAdmin: `http://localhost:5050`
+- Swagger/OpenAPI: `http://localhost:8080/docs`
+- Health check: `http://localhost:8080/health`
+- Postgres: `localhost:5432`
 
 ### Logs e diagnostico rapido
 
@@ -295,7 +293,7 @@ docker compose logs -f
 Ver logs de um serviço específico:
 
 ```bash
-docker compose logs -f backend-api
+docker compose logs -f api
 ```
 
 Listar status dos containers:
@@ -308,18 +306,16 @@ docker compose ps
 
 Os seguintes volumes Docker são usados para manter dados entre reinicializações:
 
-- `pg_data`
-- `minio_data`
-- `redis_data`
+- `postgres_data`
 
 ### Observacao importante sobre execucao
 
 O [docker-compose.yml](docker-compose.yml) define dois modos principais:
 
-- modo base (sem `profile`): sobe frontend, API, Postgres, Redis e MinIO
-- modo completo (`full-mvp`): inclui os servicos auxiliares de risco, recomendacao, agenda, wearable, ML e dados populacionais
+- modo base (sem `profile`): sobe frontend, migrations, API e Postgres
+- modo com mock (`mockdata`): executa tambem a carga de dados mockados
 
-Para validar rapidamente o ambiente local, prefira iniciar pelo modo base e, em seguida, habilitar o perfil completo quando precisar testar integracoes entre servicos.
+Para validar rapidamente o ambiente local, prefira iniciar pelo modo base. Use `--profile mockdata` quando quiser popular uma base local com dados demonstrativos.
 
 ## Arquitetura de Dados
 
@@ -421,7 +417,7 @@ Documento de referência: [PROPOSTA.md](PROPOSTA.md)
 
 ## Estrutura do Repositório
 
-Este repositório, neste estágio, concentra documentação de produto e arquitetura:
+Este repositorio combina documentacao de produto/arquitetura com implementacao local do MVP.
 
 - [README.md](README.md)
 - [PROPOSTA.md](PROPOSTA.md)
@@ -434,6 +430,32 @@ Este repositório, neste estágio, concentra documentação de produto e arquite
 - [DIAGRAMA DE CLASSE.md](DIAGRAMA%20DE%20CLASSE.md)
 - [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
 - [EPICOS.md](EPICOS.md)
+- [CODEX.md](CODEX.md) — planos de execucao e status operacional das frentes recentes
+- [docker-compose.yml](docker-compose.yml) — orquestracao local raiz
+- [modules/api](modules/api) — API FastAPI, migrations, seed mock e testes
+- [modules/spa](modules/spa) — SPA Angular
+- [modules/services](modules/services) — baseline arquitetural dos servicos auxiliares
+- [modules/ml](modules/ml) — baseline arquitetural de inferencia/ML
+- [modules/data](modules/data) — baseline arquitetural de pipelines de dados
+
+## Status do Projeto
+
+Estado atual do MVP local:
+
+- API FastAPI com contextos de usuarios, autenticacao, pacientes, recomendacoes e agendamentos.
+- Persistencia em Postgres com migrations Alembic.
+- SPA Angular consumindo a API via `/api/v1`.
+- Interceptor de autenticacao na SPA com header Bearer e tratamento de `401`.
+- Escopo de dados implementado para paciente: paciente acessa apenas os proprios dados.
+- Escopo de dados implementado para medico: medico acessa pacientes associados por `appointments`, seus agendamentos e agendamentos sem medico.
+- Seed mock opcional para cenarios com dois medicos, tres pacientes, recomendacoes e agendamentos.
+- Testes unitarios da API em evolucao; em ambiente sandbox atual, alguns testes com `TestClient` podem travar, embora `ruff check`, `py_compile` e `npm run build` tenham sido usados nas ultimas validacoes.
+
+Pendencias principais:
+
+- Ampliar cobertura automatizada da SPA conforme plano em [CODEX.md](CODEX.md).
+- Reexecutar suites de API com `TestClient` em ambiente local sem bloqueio de sandbox.
+- Evoluir os servicos auxiliares de ML, wearables, data e recomendacao hoje documentados como baseline arquitetural.
 
 ## Equipe
 
