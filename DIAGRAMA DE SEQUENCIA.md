@@ -244,6 +244,8 @@ Interpretação:
 
 Fluxo onde o paciente agenda uma consulta médica com base em recomendações do sistema ou iniciativa própria.
 
+Nota: a conclusão do agendamento não é atualizada pela API principal; essa atualização é responsabilidade do serviço de agenda externo.
+
 ```mermaid
 sequenceDiagram
 
@@ -275,6 +277,11 @@ SchedulingService-->>API: Agendamento confirmado
 
 API-->>Frontend: Confirmação
 Frontend-->>Paciente: Consulta agendada
+
+AgendaExterna->>SchedulingService: Atualiza conclusão e resultado (pós-atendimento)
+SchedulingService->>API: Disponibiliza status e resultado para consulta
+Frontend->>API: Consulta status/resultado do agendamento
+API-->>Frontend: Retorna status atualizado (incluindo concluído)
 ```
 
 ---
@@ -282,6 +289,8 @@ Frontend-->>Paciente: Consulta agendada
 # 5️⃣ Agendamento de exames preventivos
 
 Fluxo semelhante ao agendamento de consulta, porém voltado para exames recomendados pelo CarePredict.
+
+Nota: a conclusão do exame também é atualizada fora da API principal e apenas consultada por ela.
 
 ```mermaid
 sequenceDiagram

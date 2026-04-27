@@ -62,6 +62,7 @@ Sistema responsável por:
 
 - fornecer horários disponíveis de médicos
 - permitir agendamento de exames e consultas
+- atualizar conclusão de atendimentos e resultados clínicos
 
 ---
 
@@ -222,6 +223,8 @@ Modelo de Machine Learning calcula risco de doenças (com 15-25% mais precisão!
 Sistema gera recomendações preventivas contextualizadas ao comportamento real
         ↓
 Paciente agenda exames ou consultas
+        ↓
+Sistema externo de agenda atualiza conclusão e resultado
         ↓
 Médico visualiza padrões de estilo de vida na consulta
         ↓

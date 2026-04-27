@@ -102,6 +102,7 @@ MLPredict --> Redis
 - Orquestra casos de uso de paciente, medico e recomendacao.
 - Expone endpoints REST para frontend.
 - Integracao com banco, motor de recomendacao e agendamento.
+- Consulta status e resultado de conclusão; não executa a conclusão do agendamento.
 
 ### 4.3 Servico de Inferencia ML
 
@@ -123,6 +124,7 @@ MLPredict --> Redis
 
 - Simula integracao com agenda externa.
 - Permite criar e consultar horarios para consultas/exames.
+- Atualiza conclusão de agendamentos e resultados pós-atendimento.
 
 ### 4.7 Wearable Connector
 
@@ -189,6 +191,8 @@ MLPredict --> Redis
 2. API consulta Scheduling Service.
 3. Horarios disponiveis sao retornados.
 4. Agendamento e confirmado e salvo no Postgres.
+5. Após atendimento, a conclusão e o resultado são atualizados no serviço de agenda externo.
+6. A API principal apenas consulta e exibe esse status atualizado.
 
 ### 5.5 Fluxo de atualizacao de dados clinicos
 

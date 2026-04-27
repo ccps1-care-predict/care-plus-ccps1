@@ -1209,8 +1209,11 @@ Responsável por:
 * consultar agenda médica
 * agendar consultas
 * agendar exames
+* atualizar conclusão de agendamentos e resultados pós-atendimento
 
 Pode integrar com sistemas externos de agenda.
+
+No desenho atual, a API principal consulta e exibe o estado final do agendamento; a conclusão é atualizada pelo serviço de agenda.
 
 ---
 

@@ -72,7 +72,7 @@ Documento completo: [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 - prever riscos de saúde com base em histórico clínico e contexto populacional
 - recomendar exames preventivos e consultas com especialistas
 - apoiar o médico com visão consolidada e preditiva do paciente
-- permitir integração com agenda externa para agendamentos
+- permitir integração com agenda externa para agendamentos e atualização de conclusão
 
 ## Escopo Funcional (MVP)
 
@@ -264,7 +264,7 @@ Servicos adicionais no perfil completo (`docker compose --profile full-mvp up --
 | wearable-mock-apis | 8003 | Simulação de Apple Health, Google Fit e Fitbit |
 | risk-scoring-engine | 8004 | Cálculo de risco clínico/comportamental |
 | recommendation-engine | 8005 | Geração de recomendações preventivas |
-| scheduling-service | 8006 | Orquestração de agenda e slots |
+| scheduling-service | 8006 | Orquestração de agenda, slots e atualização de conclusão |
 | clinical-guidelines-validator | 8007 | Validação de regras clínicas |
 | population-data-service | 8008 | Contexto populacional por perfil |
 
@@ -350,6 +350,11 @@ Fluxos principais modelados:
 - agendamento de exames
 - consulta médica com apoio da IA
 - treinamento e atualização de modelo
+
+Regra de responsabilidade (agendamentos):
+
+- A API principal registra e consulta agendamentos e resultados.
+- A atualização de conclusão do agendamento (status `CONCLUDED` e resultado) é feita por serviço externo de agenda.
 
 Documento completo: [DIAGRAMA DE SEQUENCIA.md](DIAGRAMA%20DE%20SEQUENCIA.md)
 
