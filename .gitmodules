@@ -18,3 +18,7 @@
 	path = modules/ml
 	url = https://github.com/ccps1-care-predict/care-plus-ml.git
 	branch = main
+[submodule "modules/connector-app"]
+	path = modules/connector-app
+	url = https://github.com/ccps1-care-predict/care-plus-connector-app.git
+	branch = main
