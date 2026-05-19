@@ -21,3 +21,4 @@
 [submodule "modules/connector-app"]
 	path = modules/connector-app
 	url = https://github.com/ccps1-care-predict/connector-app
+	branch = main
