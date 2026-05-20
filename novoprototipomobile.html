@@ -191,6 +191,59 @@
                             </div>
                         </div>
 
+                        <div class="p-4 bg-gradient-to-br from-indigo-950/60 via-slate-900 to-blue-950/50 border border-indigo-500/20 rounded-2xl space-y-4">
+                            <div>
+                                <span class="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">Análise Preditiva de Risco</span>
+                                <h3 class="text-sm font-black text-white mt-3">Painel preditivo do paciente</h3>
+                                <p class="text-[10px] text-slate-400 mt-1">Resumo de risco clínico gerado por ML antes do atendimento.</p>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-rose-500/20">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-white">Cardiovascular</span>
+                                        <span class="text-[9px] font-black text-rose-300">72%</span>
+                                    </div>
+                                    <div class="h-2 bg-slate-800 rounded-full overflow-hidden mt-2.5">
+                                        <div class="h-full bg-gradient-to-r from-rose-500 to-rose-300 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                </div>
+                                <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-amber-500/20">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-white">Diabetes</span>
+                                        <span class="text-[9px] font-black text-amber-300">58%</span>
+                                    </div>
+                                    <div class="h-2 bg-slate-800 rounded-full overflow-hidden mt-2.5">
+                                        <div class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full" style="width: 58%"></div>
+                                    </div>
+                                </div>
+                                <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-500/20">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-white">Descompensação</span>
+                                        <span class="text-[9px] font-black text-emerald-300">31%</span>
+                                    </div>
+                                    <div class="h-2 bg-slate-800 rounded-full overflow-hidden mt-2.5">
+                                        <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-300 rounded-full" style="width: 31%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[10px] font-bold text-white">Tendência das métricas</span>
+                                    <span class="text-[8px] font-black uppercase text-blue-300">8 semanas</span>
+                                </div>
+                                <svg viewBox="0 0 300 120" class="w-full h-24">
+                                    <line x1="12" y1="96" x2="288" y2="96" stroke="#1e293b" stroke-width="1"></line>
+                                    <line x1="12" y1="18" x2="12" y2="96" stroke="#1e293b" stroke-width="1"></line>
+                                    <polyline fill="none" stroke="#fb7185" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="24,74 60,72 96,68 132,64 168,58 204,52 240,44 276,40"></polyline>
+                                    <polyline fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="24,48 60,52 96,58 132,64 168,60 204,54 240,46 276,42"></polyline>
+                                </svg>
+                                <div class="flex gap-3 mt-3 text-[9px] text-slate-400">
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-400"></span> FC repouso</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-sky-400"></span> Passos/dia</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="space-y-3">
                             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Registos Recentes</h3>
                             <div id="recent-users-list" class="space-y-2"></div>
@@ -327,6 +380,29 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="p-4 bg-gradient-to-br from-emerald-950/35 via-slate-900 to-blue-950/35 border border-emerald-500/20 rounded-2xl space-y-4">
+                            <div>
+                                <span class="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">Recomendações Preventivas</span>
+                                <h3 class="text-sm font-black text-white mt-3">Insights preditivos do CarePredict</h3>
+                                <p class="text-[10px] text-slate-400 mt-1">Recomendações geradas por ML para orientar prevenção e exames.</p>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-slate-950/80 border border-amber-500/20">
+                                <p class="text-[9px] font-black uppercase tracking-wider text-amber-300">Predição ML • Risco Médio</p>
+                                <p class="text-xs text-white font-semibold mt-2">Com base na sua análise, recomendamos um exame de glicose nos próximos 30 dias (Risco: Médio).</p>
+                                <p class="text-[10px] text-slate-400 mt-2">O modelo detectou queda de atividade física e maior variabilidade do sono na última quinzena.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                                    <p class="text-[9px] font-black uppercase tracking-wider text-blue-300">Meta sugerida</p>
+                                    <p class="text-[10px] text-white font-semibold mt-2">Aumentar para 9.000 passos/dia.</p>
+                                </div>
+                                <div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                                    <p class="text-[9px] font-black uppercase tracking-wider text-indigo-300">Confiança</p>
+                                    <p class="text-[10px] text-white font-semibold mt-2">87% com dados atualizados.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ABA 2: Paciente - Médicos Clínicos -->
@@ -361,6 +437,42 @@
                             <div class="p-4 flex justify-between items-center">
                                 <span class="text-[10px] font-semibold text-slate-500">Data de Registo</span>
                                 <span class="text-[10px] text-slate-300" id="profile-date">Carregando...</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">Gerenciar Dispositivos</h4>
+                                <p class="text-[10px] text-slate-400 mt-1">Conecte os seus wearables e simule o consentimento OAuth 2.0.</p>
+                            </div>
+                            <div class="space-y-3">
+                                <button onclick="openWearableModal('Apple Watch')" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3 text-left">
+                                    <div class="w-10 h-10 rounded-2xl bg-slate-800 text-white flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.415 2.14-1.247 3-.855.878-1.89 1.39-2.995 1.302-.14-1.09.352-2.194 1.135-2.982.83-.848 2.007-1.365 3.107-1.32zM20.5 17.353c-.344.8-.754 1.535-1.235 2.214-.655.926-1.19 1.566-1.603 1.92-.64.58-1.326.875-2.06.89-.528 0-1.166-.15-1.91-.454-.747-.303-1.434-.454-2.06-.454-.657 0-1.362.15-2.114.454-.753.304-1.36.463-1.82.478-.705.03-1.408-.27-2.113-.904-.45-.385-1.004-1.048-1.66-1.99-.706-1.004-1.287-2.17-1.742-3.5-.49-1.438-.737-2.832-.737-4.182 0-1.546.334-2.88 1.002-3.996.525-.897 1.224-1.607 2.098-2.128.873-.521 1.815-.786 2.824-.802.555 0 1.283.173 2.187.518.902.345 1.482.518 1.74.518.192 0 .84-.202 1.94-.606 1.04-.374 1.92-.53 2.64-.47 1.953.157 3.422.928 4.408 2.312-1.747 1.058-2.613 2.54-2.598 4.444.013 1.485.555 2.723 1.624 3.71.483.457 1.023.81 1.622 1.056-.13.376-.268.74-.413 1.092z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">Conectar Apple Watch</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">Apple Health + atividade, sono e frequência cardíaca.</p>
+                                    </div>
+                                </button>
+                                <button onclick="openWearableModal('Google Fit')" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3 text-left">
+                                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-300 flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 3.2a4.8 4.8 0 0 0-3.6 1.62L12 6.93l-2-2.11A4.8 4.8 0 0 0 6.4 3.2C3.75 3.2 1.6 5.37 1.6 8.03c0 1.25.48 2.39 1.26 3.24L12 20.8l9.14-9.53A4.8 4.8 0 0 0 22.4 8.03c0-2.66-2.15-4.83-4.8-4.83z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">Conectar Google Fit</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">Sincronização móvel de passos, sono e SpO2.</p>
+                                    </div>
+                                </button>
+                                <button onclick="openWearableModal('Fitbit')" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3 text-left">
+                                    <div class="w-10 h-10 rounded-2xl bg-sky-500/10 text-sky-300 flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 4.5A1.5 1.5 0 1 1 6 3a1.5 1.5 0 0 1 1.5 1.5zm4.5 0A1.5 1.5 0 1 1 10.5 3 1.5 1.5 0 0 1 12 4.5zm4.5 0A1.5 1.5 0 1 1 15 3a1.5 1.5 0 0 1 1.5 1.5zM7.5 9A1.5 1.5 0 1 1 6 7.5 1.5 1.5 0 0 1 7.5 9zm4.5 0a1.5 1.5 0 1 1-1.5-1.5A1.5 1.5 0 0 1 12 9zm4.5 0A1.5 1.5 0 1 1 15 7.5 1.5 1.5 0 0 1 16.5 9zM7.5 13.5A1.5 1.5 0 1 1 6 12a1.5 1.5 0 0 1 1.5 1.5zm4.5 0A1.5 1.5 0 1 1 10.5 12a1.5 1.5 0 0 1 1.5 1.5zm-4.5 4.5A1.5 1.5 0 1 1 6 16.5 1.5 1.5 0 0 1 7.5 18zm4.5 0a1.5 1.5 0 1 1-1.5-1.5A1.5 1.5 0 0 1 12 18z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">Conectar Fitbit</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">Stress, batimentos e atividade contínua via Fitbit.</p>
+                                    </div>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -398,6 +510,32 @@
                     <div class="flex gap-2.5 pt-2">
                         <button onclick="closeBookingSheet()" class="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold py-3 rounded-xl text-xs transition-all">Cancelar</button>
                         <button onclick="confirmBooking()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs transition-all">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bottom-sheet-wearable" class="absolute inset-x-0 bottom-0 bg-slate-900 border-t border-slate-800 rounded-t-[32px] p-6 z-30 transform translate-y-full transition-all duration-300 flex flex-col">
+                <div class="w-10 h-1 bg-slate-800 rounded-full mx-auto mb-4"></div>
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-300">OAuth 2.0 • Wearable</p>
+                <h3 class="text-sm font-bold text-white mt-2">Autorizar <span id="wearable-provider-name">Apple Watch</span></h3>
+                <p class="text-[10px] text-slate-400 mt-1">Fluxo mock de consentimento para sincronizar dados biométricos com o CarePredict.</p>
+                <div class="space-y-3.5 mt-4">
+                    <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+                        <p class="text-[9px] font-black uppercase tracking-wider text-slate-500">O que será autorizado</p>
+                        <ul class="mt-2 space-y-1.5 text-[10px] text-slate-300">
+                            <li>• Passos, atividade física e sono</li>
+                            <li>• Frequência cardíaca e oxigenação</li>
+                            <li>• Uso em análises preditivas e recomendações preventivas</li>
+                        </ul>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                        <p class="text-[9px] font-black uppercase tracking-wider text-blue-300">Etapas do fluxo</p>
+                        <p class="text-[10px] text-slate-300 mt-2">Redirecionamento seguro, consentimento do provedor e retorno com token OAuth para sincronização inicial.</p>
+                    </div>
+
+                    <div class="flex gap-2.5 pt-2">
+                        <button onclick="closeWearableModal()" class="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold py-3 rounded-xl text-xs transition-all">Cancelar</button>
+                        <button onclick="confirmWearableConnection()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs transition-all">Permitir</button>
                     </div>
                 </div>
             </div>
@@ -441,6 +579,7 @@
 
         // Base de Dados Simulada (Fiel aos Schemas definidos no OpenAPI)
         let dbUsers = [
+            { id: "admin-0000-0000-0000-000000000000", name: "Médico Administrador", email: "admin@careplus.com", type: "medico", created_at: "2026-05-01T09:00:00Z" },
             { id: "e857ad8a-5347-4cf0-928e-eb930985532a", name: "Dra. Ana Rita Santos", email: "ana.santos@careplus.com", type: "medico", created_at: "2026-05-18T14:30:00Z" },
             { id: "b21857ac-7421-4ba2-99ca-dbcc01859c03", name: "Dr. João Carlos Silva", email: "joao.silva@careplus.com", type: "medico", created_at: "2026-05-19T09:12:00Z" },
             { id: "a2d1f7bc-8422-4fe3-982c-49033bbd4051", name: "Mariana Sousa Mendes", email: "mariana.sousa@gmail.com", type: "paciente", created_at: "2026-05-19T11:45:00Z" },
@@ -1012,6 +1151,28 @@
                     addLog('ERRO', 'Erro de rede ou quebra de comunicação durante o envio.', error.message);
                 }
             }
+        }
+
+        function openWearableModal(providerName) {
+            document.getElementById('wearable-provider-name').innerText = providerName;
+            const sheet = document.getElementById('bottom-sheet-wearable');
+            sheet.classList.remove('translate-y-full');
+            addLog('INTERAÇÃO', `Fluxo OAuth mock iniciado para ${providerName}.`);
+        }
+
+        function closeWearableModal() {
+            document.getElementById('bottom-sheet-wearable').classList.add('translate-y-full');
+        }
+
+        function confirmWearableConnection() {
+            const providerName = document.getElementById('wearable-provider-name').innerText;
+            closeWearableModal();
+            showToast("Wearable conectado", `${providerName} autorizado com sucesso no fluxo mock OAuth 2.0.`, "success");
+            addLog('SUCESSO', `Conexão do wearable confirmada para ${providerName}.`, {
+                provider: providerName,
+                scope: ['activity', 'heart_rate', 'sleep', 'spo2'],
+                status: 'authorized_mock'
+            });
         }
 
         // CONTROLO DE AGENDAMENTO (BOTTOM SHEET)
