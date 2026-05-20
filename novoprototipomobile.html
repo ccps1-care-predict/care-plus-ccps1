@@ -517,7 +517,7 @@
             <div id="bottom-sheet-wearable" class="absolute inset-x-0 bottom-0 bg-slate-900 border-t border-slate-800 rounded-t-[32px] p-6 z-30 transform translate-y-full transition-all duration-300 flex flex-col">
                 <div class="w-10 h-1 bg-slate-800 rounded-full mx-auto mb-4"></div>
                 <p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-300">OAuth 2.0 • Wearable</p>
-                <h3 class="text-sm font-bold text-white mt-2">Autorizar <span id="wearable-provider-name">Apple Watch</span></h3>
+                <h3 class="text-sm font-bold text-white mt-2">Autorizar <span id="sheet-wearable-provider-name">Apple Watch</span></h3>
                 <p class="text-[10px] text-slate-400 mt-1">Fluxo mock de consentimento para sincronizar dados biométricos com o CarePredict.</p>
                 <div class="space-y-3.5 mt-4">
                     <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
@@ -1154,7 +1154,7 @@
         }
 
         function openWearableModal(providerName) {
-            document.getElementById('wearable-provider-name').innerText = providerName;
+            document.getElementById('sheet-wearable-provider-name').innerText = providerName;
             const sheet = document.getElementById('bottom-sheet-wearable');
             sheet.classList.remove('translate-y-full');
             addLog('INTERAÇÃO', `Fluxo OAuth mock iniciado para ${providerName}.`);
@@ -1165,7 +1165,7 @@
         }
 
         function confirmWearableConnection() {
-            const providerName = document.getElementById('wearable-provider-name').innerText;
+            const providerName = document.getElementById('sheet-wearable-provider-name').innerText;
             closeWearableModal();
             showToast("Wearable conectado", `${providerName} autorizado com sucesso no fluxo mock OAuth 2.0.`, "success");
             addLog('SUCESSO', `Conexão do wearable confirmada para ${providerName}.`, {

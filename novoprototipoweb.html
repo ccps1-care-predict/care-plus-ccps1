@@ -644,7 +644,7 @@
             <div class="flex justify-between items-start gap-4">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.24em] text-blue-300">OAuth 2.0 • Conexão de Wearable</p>
-                    <h3 class="text-lg font-bold text-white mt-2">Autorizar integração com <span id="wearable-provider-name">Apple Watch</span></h3>
+                    <h3 class="text-lg font-bold text-white mt-2">Autorizar integração com <span id="modal-wearable-provider-name">Apple Watch</span></h3>
                     <p class="text-xs text-slate-400 mt-2">Este fluxo simula a etapa de consentimento do CarePredict para recolher dados biométricos e enriquecer as análises preditivas.</p>
                 </div>
                 <button onclick="closeWearableModal()" class="text-slate-400 hover:text-white transition-colors">
@@ -1324,7 +1324,7 @@
         }
 
         function openWearableModal(providerName) {
-            document.getElementById('wearable-provider-name').innerText = providerName;
+            document.getElementById('modal-wearable-provider-name').innerText = providerName;
             document.getElementById('wearable-provider-inline').innerText = providerName;
             document.getElementById('modal-wearable-auth').classList.remove('hidden');
             addLog('SISTEMA', `Fluxo OAuth mock iniciado para ${providerName}.`);
@@ -1335,7 +1335,7 @@
         }
 
         function confirmWearableConnection() {
-            const providerName = document.getElementById('wearable-provider-name').innerText;
+            const providerName = document.getElementById('modal-wearable-provider-name').innerText;
             closeWearableModal();
             showToast("Dispositivo conectado", `${providerName} autorizado com sucesso no fluxo mock OAuth 2.0.`, "success");
             addLog('SUCESSO', `Consentimento de wearable confirmado para ${providerName}.`, {
