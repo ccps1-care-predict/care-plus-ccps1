@@ -627,7 +627,7 @@
 
             <div id="api-url-container" class="space-y-2 opacity-40 pointer-events-none transition-all duration-300">
                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">URL Base da API</label>
-                <input id="api-base-url" type="text" value="http://localhost:8000" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 placeholder-slate-700" placeholder="http://localhost:8000">
+                <input id="api-base-url" type="text" value="http://localhost:8080" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 placeholder-slate-700" placeholder="http://localhost:8080">
             </div>
 
             <div class="flex-1 flex flex-col min-h-0">
@@ -694,22 +694,19 @@
 
             <div class="space-y-4">
                 <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Médico Clínico Selecionado</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Preferência de Médico</label>
                     <input id="booking-doctor-name" type="text" readonly class="w-full bg-slate-950 border border-slate-850 text-slate-300 px-4 py-3 rounded-xl text-xs focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Data do Exame</label>
-                        <input type="date" value="2026-05-25" class="w-full bg-slate-950 border border-slate-850 text-slate-300 px-4 py-3 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Data</label>
+                        <input id="booking-date" type="date" value="2026-05-25" onchange="loadAvailableSlots()" class="w-full bg-slate-950 border border-slate-850 text-slate-300 px-4 py-3 rounded-xl text-xs focus:outline-none focus:border-blue-500">
                     </div>
                     <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Hora</label>
-                        <select class="w-full bg-slate-950 border border-slate-850 text-slate-300 px-4 py-3 rounded-xl text-xs focus:outline-none focus:border-blue-500">
-                            <option>09:00</option>
-                            <option>11:00</option>
-                            <option selected>14:00</option>
-                            <option>16:00</option>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Slot Disponível</label>
+                        <select id="booking-slot-select" class="w-full bg-slate-950 border border-slate-850 text-slate-300 px-4 py-3 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+                            <option value="">Selecione uma data</option>
                         </select>
                     </div>
                 </div>
@@ -729,14 +726,22 @@
         let activeTab = 'overview';
         let filterRole = 'all';
         let searchQuery = '';
+        let currentPatientRecord = null;
+        let bookingContext = { doctorName: null };
+        let availableSlots = [];
 
         // Banco de dados Mock (Esquemas OpenAPI)
         let dbUsers = [
-            { id: "admin-0000-0000-0000-000000000000", name: "Médico Administrador", email: "admin@careplus.com", type: "medico", created_at: "2026-05-01T09:00:00Z" },
+            { id: "00000000-0000-0000-0000-000000000001", name: "Médico Administrador", email: "admin@careplus.com", type: "medico", created_at: "2026-05-01T09:00:00Z" },
             { id: "e857ad8a-5347-4cf0-928e-eb930985532a", name: "Dra. Ana Rita Santos", email: "ana.santos@careplus.com", type: "medico", created_at: "2026-05-18T14:30:00Z" },
             { id: "b21857ac-7421-4ba2-99ca-dbcc01859c03", name: "Dr. João Carlos Silva", email: "joao.silva@careplus.com", type: "medico", created_at: "2026-05-19T09:12:00Z" },
             { id: "a2d1f7bc-8422-4fe3-982c-49033bbd4051", name: "Mariana Sousa Mendes", email: "mariana.sousa@gmail.com", type: "paciente", created_at: "2026-05-19T11:45:00Z" },
             { id: "c4217abc-5921-4c7b-9911-3912bcce1031", name: "Pedro Duarte Melo", email: "pedro.melo@hotmail.com", type: "paciente", created_at: "2026-05-20T02:10:00Z" }
+        ];
+
+        let dbPatients = [
+            { id: "f9f3c6a1-7f8a-4f91-9f2f-3d4dbec90001", user_id: "a2d1f7bc-8422-4fe3-982c-49033bbd4051", name: "Mariana Sousa Mendes", email: "mariana.sousa@gmail.com", created_at: "2026-05-19T11:45:00Z" },
+            { id: "f9f3c6a1-7f8a-4f91-9f2f-3d4dbec90002", user_id: "c4217abc-5921-4c7b-9911-3912bcce1031", name: "Pedro Duarte Melo", email: "pedro.melo@hotmail.com", created_at: "2026-05-20T02:10:00Z" }
         ];
 
         // Biométrica Simulação (Wearables)
@@ -805,6 +810,123 @@
             document.getElementById('dev-logs').innerHTML = '<div class="text-slate-600">// Monitor desimpedido. Pronto para monitorizar...</div>';
         }
 
+        function authHeaders() {
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        function syncPatientProfileCard() {
+            const source = currentPatientRecord || currentUser;
+            if (!source) return;
+
+            document.getElementById('profile-name').innerText = source.name || currentUser.name;
+            document.getElementById('profile-email').innerText = source.email || currentUser.email;
+            document.getElementById('profile-avatar-char').innerText = (source.name || currentUser.name || 'U')[0];
+            document.getElementById('profile-uuid').innerText = source.id || 'Sem identificador UUID';
+            document.getElementById('profile-date').innerText = source.created_at
+                ? new Date(source.created_at).toLocaleDateString('pt-PT')
+                : 'Não disponível';
+        }
+
+        async function loadCurrentPatientRecord() {
+            if (!currentUser || currentUser.type !== 'paciente') {
+                currentPatientRecord = null;
+                return;
+            }
+
+            if (apiMode === 'mock') {
+                currentPatientRecord = dbPatients.find(patient => patient.user_id === currentUser.id) || null;
+                syncPatientProfileCard();
+                return;
+            }
+
+            const baseUrl = document.getElementById('api-base-url').value;
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/patients?skip=0&limit=100`, {
+                    headers: authHeaders()
+                });
+
+                if (!response.ok) {
+                    addLog('ERRO', 'Não foi possível carregar o paciente autenticado em `/api/v1/patients`.', response.status);
+                    currentPatientRecord = null;
+                    syncPatientProfileCard();
+                    return;
+                }
+
+                const patients = await response.json();
+                currentPatientRecord = Array.isArray(patients) && patients.length > 0 ? patients[0] : null;
+                syncPatientProfileCard();
+            } catch (error) {
+                addLog('ERRO', 'Falha ao consultar `/api/v1/patients`.', error.message);
+                currentPatientRecord = null;
+                syncPatientProfileCard();
+            }
+        }
+
+        function renderSlotOptions(slots) {
+            const select = document.getElementById('booking-slot-select');
+            availableSlots = slots;
+
+            if (!select) return;
+
+            if (!slots.length) {
+                select.innerHTML = '<option value="">Sem slots disponíveis</option>';
+                return;
+            }
+
+            select.innerHTML = slots.map(slot => {
+                const label = `${new Date(slot.time).toLocaleString('pt-PT')}${slot.available === false ? ' • indisponível' : ''}`;
+                return `<option value="${slot.id}">${label}</option>`;
+            }).join('');
+        }
+
+        async function loadAvailableSlots() {
+            const select = document.getElementById('booking-slot-select');
+            const dateInput = document.getElementById('booking-date');
+            if (!select || !dateInput) return;
+
+            const dateValue = dateInput.value;
+            if (!dateValue) {
+                renderSlotOptions([]);
+                return;
+            }
+
+            if (apiMode === 'mock') {
+                renderSlotOptions([
+                    { id: `${dateValue}-slot-09`, time: `${dateValue}T09:00:00`, available: true },
+                    { id: `${dateValue}-slot-11`, time: `${dateValue}T11:00:00`, available: true },
+                    { id: `${dateValue}-slot-14`, time: `${dateValue}T14:00:00`, available: true },
+                ]);
+                return;
+            }
+
+            addLog('GET', 'Consultando slots disponíveis em `/api/v1/scheduling/slots`', {
+                params: { date: `${dateValue}T00:00:00`, skip: 0, limit: 100 },
+                headers: authHeaders()
+            });
+
+            try {
+                const baseUrl = document.getElementById('api-base-url').value;
+                const response = await fetch(
+                    `${baseUrl}/api/v1/scheduling/slots?date=${encodeURIComponent(`${dateValue}T00:00:00`)}&skip=0&limit=100`,
+                    { headers: authHeaders() }
+                );
+
+                if (!response.ok) {
+                    addLog('ERRO', 'A API recusou a consulta de slots.', response.status);
+                    renderSlotOptions([]);
+                    return;
+                }
+
+                const slots = await response.json();
+                const availableOnly = Array.isArray(slots) ? slots.filter(slot => slot.available) : [];
+                addLog('SUCESSO', `Slots recebidos da API (${availableOnly.length} disponíveis).`, availableOnly);
+                renderSlotOptions(availableOnly);
+            } catch (error) {
+                addLog('ERRO', 'Falha ao consultar `/api/v1/scheduling/slots`.', error.message);
+                renderSlotOptions([]);
+            }
+        }
+
         function showToast(title, text, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -864,6 +986,7 @@
                         token_type: "bearer",
                         user_info: currentUser
                     });
+                    await loadCurrentPatientRecord();
                     showToast(`Sessão Iniciada`, `Bem-vindo à plataforma, ${currentUser.name}!`, "success");
                     proceedToApp();
                 } else {
@@ -888,17 +1011,29 @@
                         token = data.access_token;
                         addLog('SUCESSO', 'Autenticação aprovada no servidor real.', data);
 
-                        const usersRes = await fetch(`${baseUrl}/api/v1/users?skip=0&limit=100`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
+                        const profileRes = await fetch(`${baseUrl}/api/v1/profile`, {
+                            headers: authHeaders()
                         });
-                        
+                        const usersRes = await fetch(`${baseUrl}/api/v1/users?skip=0&limit=100`, {
+                            headers: authHeaders()
+                        });
+
+                        let profileData = null;
+                        if (profileRes.ok) {
+                            profileData = await profileRes.json();
+                        }
+
                         if (usersRes.ok) {
                             const allUsers = await usersRes.json();
                             const found = allUsers.find(u => u.email.toLowerCase() === usernameInput.toLowerCase());
-                            currentUser = found ? found : { name: usernameInput.split('@')[0], email: usernameInput, type: "paciente" };
+                            currentUser = found
+                                ? { ...found, ...(profileData || {}) }
+                                : { ...(profileData || {}), name: usernameInput.split('@')[0], email: usernameInput, type: "paciente" };
                         } else {
-                            currentUser = { name: usernameInput.split('@')[0], email: usernameInput, type: "paciente" };
+                            currentUser = { ...(profileData || {}), name: usernameInput.split('@')[0], email: usernameInput, type: "paciente" };
                         }
+
+                        await loadCurrentPatientRecord();
                         
                         showToast("Sucesso", "Conectado com sucesso ao servidor!", "success");
                         proceedToApp();
@@ -936,13 +1071,7 @@
             } else {
                 wrapperPaciente.classList.remove('hidden');
                 wrapperMedico.classList.add('hidden');
-                
-                // Atualizar dados de Perfil do Paciente dinamicamente
-                document.getElementById('profile-name').innerText = currentUser.name;
-                document.getElementById('profile-email').innerText = currentUser.email;
-                document.getElementById('profile-avatar-char').innerText = currentUser.name[0];
-                document.getElementById('profile-uuid').innerText = currentUser.id || 'Sem identificador UUID';
-                document.getElementById('profile-date').innerText = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('pt-PT') : 'Hoje';
+                syncPatientProfileCard();
 
                 switchTabPaciente('health');
             }
@@ -951,6 +1080,7 @@
         function handleLogout() {
             token = null;
             currentUser = null;
+            currentPatientRecord = null;
             document.getElementById('screen-dashboard').classList.add('hidden');
             document.getElementById('app-sidebar').classList.add('hidden');
             document.getElementById('screen-login').classList.remove('hidden');
@@ -1082,7 +1212,7 @@
                         renderListsMedico(users);
                     } else {
                         addLog('ERRO', 'A API recusou o acesso.', response.status);
-                        showToast("Erro de Acesso", "Não possui privilégios de Administrador.", "error");
+                        showToast("Erro de Acesso", "Não foi possível consultar utilizadores com o token atual.", "error");
                     }
                 } catch (error) {
                     addLog('ERRO', 'Incapaz de ler base de dados da API.', error.message);
@@ -1262,9 +1392,9 @@
                 addLog('ERRO (422)', 'Validation Error', { loc: ["body", "name"], msg: "String should have at least 2 characters", type: "value_error.any_str.min_length" });
                 return;
             }
-            if (!email.includes('@')) {
-                showToast("Erro de Validação (422)", "Endereço de e-mail inválido.", "error");
-                addLog('ERRO (422)', 'Validation Error', { loc: ["body", "email"], msg: "value is not a valid email address", type: "value_error.email" });
+            if (!email || !email.trim()) {
+                showToast("Erro de Validação", "O e-mail é obrigatório.", "error");
+                addLog('ERRO', 'Campo obrigatório ausente.', { field: "email" });
                 return;
             }
             if (!password || password.length < 6) {
@@ -1347,21 +1477,83 @@
 
         // AGENDAMENTO MODAL (PACIENTE)
         function openBookingModal(doctorName) {
+            bookingContext = { doctorName };
             document.getElementById('booking-doctor-name').value = doctorName;
+            if (!document.getElementById('booking-date').value) {
+                document.getElementById('booking-date').value = '2026-05-25';
+            }
             const modal = document.getElementById('modal-booking');
             modal.classList.remove('hidden');
             addLog('SISTEMA', `Iniciando agendamento médico com: ${doctorName}`);
+            loadAvailableSlots();
         }
 
         function closeBookingModal() {
             document.getElementById('modal-booking').classList.add('hidden');
         }
 
-        function confirmBooking() {
+        async function confirmBooking() {
             const docName = document.getElementById('booking-doctor-name').value;
-            closeBookingModal();
-            showToast("Sucesso", `Consulta médica agendada com o ${docName}!`, "success");
-            addLog('SUCESSO', `Marcação confirmada localmente para ${docName}.`);
+            const slotId = document.getElementById('booking-slot-select').value;
+
+            if (!slotId) {
+                showToast("Slot Obrigatório", "Selecione um slot disponível antes de confirmar.", "error");
+                return;
+            }
+
+            if (apiMode === 'mock') {
+                closeBookingModal();
+                showToast("Sucesso", `Consulta médica agendada com preferência por ${docName}!`, "success");
+                addLog('SUCESSO', `Marcação confirmada localmente para ${docName}.`, {
+                    slot_id: slotId,
+                    patient_id: currentPatientRecord?.id || null,
+                });
+                return;
+            }
+
+            if (!currentPatientRecord?.id) {
+                showToast("Paciente não carregado", "Não foi possível identificar o paciente autenticado para criar o agendamento.", "error");
+                return;
+            }
+
+            const payload = {
+                patient_id: currentPatientRecord.id,
+                slot_id: slotId,
+                type: 'consultation',
+            };
+
+            addLog('POST', 'Criando agendamento em `/api/v1/scheduling/appointments`', {
+                payload,
+                doctor_preference_name: bookingContext.doctorName,
+                headers: authHeaders(),
+            });
+
+            try {
+                const baseUrl = document.getElementById('api-base-url').value;
+                const response = await fetch(`${baseUrl}/api/v1/scheduling/appointments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders(),
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    addLog('ERRO', 'A API recusou a criação do agendamento.', err);
+                    showToast("Erro ao agendar", err.detail || "Não foi possível criar o agendamento.", "error");
+                    return;
+                }
+
+                const appointment = await response.json();
+                closeBookingModal();
+                showToast("Sucesso", `Agendamento criado com preferência por ${docName}.`, "success");
+                addLog('SUCESSO', 'Agendamento criado na API.', appointment);
+            } catch (error) {
+                addLog('ERRO', 'Falha ao ligar à API de scheduling.', error.message);
+                showToast("Erro de Rede", "Não foi possível comunicar com o serviço de agendamento.", "error");
+            }
         }
     </script>
 </body>

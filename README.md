@@ -33,6 +33,7 @@ O CarePredict foi concebido para atuar de forma preventiva na jornada de saúde 
 - dados clínicos individuais
 - dados populacionais públicos (DATASUS, IBGE e ANS)
 - **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, Garmin)
+- **portal web único reutilizado em desktop e em apps mobile via WebView**
 - modelos de Machine Learning para risco de doenças
 - motor de recomendação preventiva
 
@@ -107,6 +108,11 @@ Documento completo: [PESQUISA DE MERCADO.md](PESQUISA%20DE%20MERCADO.md)
 
 O CarePredict integra dados contínuos de dispositivos wearables para enriquecer os modelos preditivos com informações de **estilo de vida real** do paciente.
 
+Os protótipos atuais definem dois canais:
+
+- [`novoprototipoweb.html`](novoprototipoweb.html): experiência desktop do portal
+- [`novoprototipomobile.html`](novoprototipomobile.html): base para os apps mobile do paciente e do médico, ambos com dashboard em `WebView`
+
 ### 📱 Plataformas Suportadas
 
 **Fase 1 (MVP):**
@@ -137,12 +143,13 @@ O CarePredict integra dados contínuos de dispositivos wearables para enriquecer
 
 ### 🔗 Fluxo de Integração
 
-1. **Autenticação** — Paciente conecta dispositivo via OAuth
-2. **Sincronização** — Dados coletados diariamente (batch) ou em tempo real (streaming)
-3. **Processamento** — Normalização, validação, enriquecimento
-4. **Feature Engineering** — Extração de lifestyle features
-5. **Modelagem** — Modelos ML enriquecidos com dados comportamentais
-6. **Recomendação** — Insights contextualizados com estilo de vida
+1. **Desktop** — O portal web continua como frontend padrão no navegador
+2. **App do paciente** — Carrega o dashboard em `WebView` e coleta dados nativos de saúde
+3. **App do médico** — Carrega o dashboard clínico em `WebView` para uso móvel
+4. **Consentimento e coleta** — O app do paciente solicita permissões nativas e conecta wearables
+5. **Sincronização** — O app do paciente envia métricas coletadas para o `wearable-connector`
+6. **Processamento** — Normalização, validação, enriquecimento
+7. **Modelagem e recomendação** — ML e insights contextualizados com estilo de vida
 
 Documento completo: [INTEGRACAO_WEARABLES.md](INTEGRACAO_WEARABLES.md)
 
@@ -152,11 +159,14 @@ A arquitetura cloud foi desenhada em Azure, com separação de camadas para apli
 
 Principais componentes:
 
-- Azure App Service (portal/dashboard)
+- Azure App Service (portal/dashboard web)
+- App mobile do paciente com WebView para reaproveitar o dashboard no celular
+- App mobile do médico com WebView para acesso móvel ao dashboard clínico
 - Azure API Management + Backend API com **endpoints wearable**
+- bridge nativa no app do paciente para Apple Health / Google Fit / provedores suportados
 - Azure Entra ID (autenticação) + **OAuth 2.0 para wearables**
 - Azure Key Vault (**armazenamento seguro de tokens de wearables**)
-- Event Hub + Data Factory (**ingestão de dados wearable em streaming e batch**)
+- Event Hub + Data Factory (**ingestão de dados wearable recebidos do app do paciente e de integrações complementares**)
 - Data Lake + Azure SQL Database (armazenamento com **tabelas de wearables**)
 - Databricks + Synapse (**processamento de atividade física, sono, frequência cardíaca, estresse**)
 - Azure Machine Learning (**modelos preditivos enriquecidos com lifestyle features**)

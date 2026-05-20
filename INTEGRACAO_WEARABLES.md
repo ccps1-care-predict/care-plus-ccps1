@@ -4,6 +4,13 @@
 
 Este documento descreve a estratégia de integração com dispositivos wearables no CarePredict para capturar dados contínuos do estilo de vida (atividade física, frequência cardíaca, sono, estresse) e enriquecer os modelos preditivos de risco.
 
+O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototipoweb.html) e [`novoprototipomobile.html`](novoprototipomobile.html) como referência de experiência:
+
+- no **desktop**, o portal web continua sendo acessado diretamente
+- no **mobile do paciente**, o dashboard é carregado em **WebView**
+- no **mobile do médico**, o dashboard clínico também é carregado em **WebView**
+- o **app do paciente** também passa a ser a borda de coleta que alimenta o `wearable-connector`
+
 ---
 
 ## Objetivos
@@ -34,12 +41,38 @@ Este documento descreve a estratégia de integração com dispositivos wearables
 
 ---
 
+## Canais de Acesso
+
+### Desktop
+
+- A experiência de portal permanece equivalente ao protótipo web.
+- O navegador desktop é um canal de visualização, autenticação e gestão.
+- Não há coleta nativa de métricas de saúde pelo desktop.
+
+### Mobile
+
+- O protótipo mobile representa um **app container**.
+- O dashboard clínico/paciente é carregado em uma **WebView**.
+- O médico também possui app móvel para consumir o dashboard clínico.
+- Apenas o app do paciente solicita permissões locais, lê dados de saúde e envia os payloads para o `wearable-connector`.
+
+---
+
 ## Arquitetura de Integração
 
 ```mermaid
 flowchart TB
 
-subgraph WearableDevices["Dispositivos Wearables"]
+subgraph Experience["Canais de Experiência"]
+    DesktopWeb["Portal Web Desktop"]
+    PatientMobileShell["App Mobile do Paciente"]
+    DoctorMobileShell["App Mobile do Médico"]
+    PatientMobileWebView["WebView do Paciente"]
+    DoctorMobileWebView["WebView do Médico"]
+    NativeHealth["Bridge Nativa de Saúde"]
+end
+
+subgraph WearableDevices["Dispositivos e Fontes"]
     AppleWatch[Apple Watch/iPhone]
     AndroidWear[Android Wear/Smartphone]
     Fitbit[Fitbit Device]
@@ -52,7 +85,8 @@ subgraph AuthLayer["Camada de Autenticação"]
 end
 
 subgraph IngestLayer["Camada de Ingestão"]
-    WearableConnector["Wearable Data Connector"]
+    WearableConnector["Wearable Connector"]
+    MobileGateway["Mobile Health Gateway"]
     EventHub["Azure Event Hub<br/>(Streaming)"]
     Queue["Service Bus Queue<br/>(Async Processing)"]
 end
@@ -89,14 +123,30 @@ end
 
 subgraph ApplicationLayer["Aplicações"]
     PatientDash["Dashboard Paciente"]
+    PatientMobileDash["Dashboard Paciente Mobile<br/>(WebView)"]
     DoctorDash["Dashboard Médico"]
+    DoctorMobileDash["Dashboard Médico Mobile<br/>(WebView)"]
     Recommendations["Recommendation Engine"]
 end
 
-WearableDevices --> AuthLayer
-AppleAuth --> WearableConnector
-GoogleAuth --> WearableConnector
+DesktopWeb --> PatientDash
+DesktopWeb --> DoctorDash
+PatientMobileShell --> PatientMobileWebView
+PatientMobileWebView --> PatientMobileDash
+DoctorMobileShell --> DoctorMobileWebView
+DoctorMobileWebView --> DoctorMobileDash
+PatientMobileShell --> NativeHealth
+
+AppleWatch --> NativeHealth
+AndroidWear --> NativeHealth
+Fitbit --> NativeHealth
+
+NativeHealth --> MobileGateway
+MobileGateway --> WearableConnector
+
 FitbitAuth --> WearableConnector
+AppleAuth --> MobileGateway
+GoogleAuth --> MobileGateway
 
 WearableConnector --> EventHub
 EventHub --> Queue
@@ -123,7 +173,9 @@ StressIndicators --> FeatureStore
 FeatureStore --> RiskModels
 RiskModels --> Inference
 Inference --> PatientDash
+Inference --> PatientMobileDash
 Inference --> DoctorDash
+Inference --> DoctorMobileDash
 Inference --> Recommendations
 ```
 
@@ -136,40 +188,56 @@ Inference --> Recommendations
 **Fluxo OAuth 2.0:**
 
 ```
-Paciente → CarePredict App → Plataforma Wearable
-                            ↓
-                     Tela de Autenticação
-                            ↓
-                    Consentimento de Acesso
-                            ↓
-                    Retorno de Access Token
-                            ↓
-                   Armazenamento Seguro em Vault
+Desktop:
+Paciente → Portal Web → Backend → Provedor/OAuth → Vault
+
+Mobile:
+Paciente → App Mobile do Paciente → WebView do portal
+                                ↓
+                       Permissões nativas de saúde
+                                ↓
+                  Consentimento / token do provedor wearable
+                                ↓
+                  Envio seguro para o wearable-connector
+
+Médico:
+Médico → App Mobile do Médico → WebView do dashboard clínico
 ```
 
 ### 2️⃣ Coleta de Dados
 
-**Em Tempo Real (Streaming):**
-- Eventos de frequência cardíaca, GPS
-- Alertas de anomalias
-- Mudanças de status de atividade
+**No App do Paciente (origem primária):**
+- Leitura local de Apple Health / Google Fit / sensores autorizados
+- Captura de eventos de frequência cardíaca, passos, sono e SpO2
+- Empacotamento de payloads para sincronização com o `wearable-connector`
 
-**Batch (Diário/Horário):**
+**No App do Médico:**
+- Consumo móvel do dashboard clínico
+- Visualização de riscos, tendências e pacientes monitorados
+- Sem coleta nativa de métricas de saúde
+
+**No Portal Desktop:**
+- Gestão da conta e visualização dos dados já sincronizados
+- Início de consentimentos e acompanhamento do status do vínculo
+
+**Sincronização (lote/evento):**
 - Resumo de passos do dia
 - Dados de sono
 - Calorias queimadas
 - Resumo de exercícios
+- Alertas de anomalias quando houver suporte do app/provedor
 
 ### 3️⃣ Ingestão e Anonimização
 
 ```python
 # Pseudocódigo
-1. receive_wearable_data(patient_id, access_token)
-2. fetch_data_from_api(access_token)
-3. validate_data_integrity()
-4. anonymize_pii(data)
-5. store_in_data_lake(raw_zone)
-6. emit_event_to_processing_pipeline()
+1. patient_mobile_app.collect_native_health_data(patient_id)
+2. patient_mobile_app.normalize_and_sign_payload()
+3. wearable_connector.receive_mobile_sync(payload)
+4. validate_data_integrity()
+5. anonymize_pii(data)
+6. store_in_data_lake(raw_zone)
+7. emit_event_to_processing_pipeline()
 ```
 
 ### 4️⃣ Processamento e Feature Engineering
@@ -197,6 +265,24 @@ Features geradas alimentam os modelos de:
 - Risco de diabetes
 - Risco cardiovascular
 - Recomendações de prevenção
+
+---
+
+## Papel do App Mobile no Desenho
+
+Os apps móveis deixam de ser apenas um invólucro visual e assumem funções distintas:
+
+1. **App do paciente**: hospedar o dashboard em `WebView`, reaproveitando o frontend existente.
+2. **App do paciente**: solicitar permissões nativas e interagir com os provedores de saúde do dispositivo.
+3. **App do paciente**: fornecer dados ao `wearable-connector`, enviando payloads normalizados para o backend de ingestão.
+4. **App do médico**: hospedar o dashboard clínico em `WebView` para uso móvel pela equipe assistencial.
+
+Isso desacopla a experiência web da coleta local de sinais de saúde:
+
+- o frontend continua unificado
+- o app do paciente adiciona capacidades nativas
+- o app do médico amplia o acesso móvel ao painel clínico
+- o `wearable-connector` permanece como o ponto central de ingestão, normalização e governança
 
 ---
 
@@ -576,4 +662,3 @@ azure-keyvault-secrets    # Azure Key Vault
 - [Fitbit API Documentation](https://dev.fitbit.com/docs/)
 - [LGPD - Lei Geral de Proteção de Dados](http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)
 - [Azure Key Vault Best Practices](https://learn.microsoft.com/en-us/azure/key-vault/general/best-practices)
-

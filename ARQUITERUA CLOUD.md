@@ -4,6 +4,13 @@ Este documento descreve a arquitetura cloud do **CarePredict**, sistema de medic
 
 O sistema integra dados clínicos com dados contínuos de **dispositivos wearables** (Apple HealthKit, Google Fit, Fitbit, Garmin, Oura Ring) para compor uma visão 360° do paciente e elevar a precisão dos modelos preditivos em **15–25%**.
 
+Com base nos protótipos [`novoprototipoweb.html`](novoprototipoweb.html) e [`novoprototipomobile.html`](novoprototipomobile.html), o frontend segue em dois canais complementares:
+
+- **desktop**: o portal web permanece como está, acessado diretamente pelo navegador
+- **mobile paciente**: o dashboard é carregado dentro de um **app shell** via **WebView**
+- **mobile médico**: o médico também possui um **app shell** com acesso móvel ao dashboard clínico
+- **app do paciente**: além de hospedar o dashboard, também atua como **fonte de dados** para o `wearable-connector`, coletando informações nativas de saúde e enviando-as para ingestão
+
 A arquitetura foi projetada utilizando **Microsoft Azure** e segue princípios de:
 
 - escalabilidade
@@ -22,15 +29,22 @@ flowchart TB
 
 %% USERS
 
-Paciente[Paciente - Portal/App]
-Medico[Médico - Dashboard]
+PacienteDesktop[Paciente - Navegador Desktop]
+PacienteMobile[Paciente - App Mobile]
+MedicoDesktop[Médico - Dashboard Web]
+MedicoMobile[Médico - App Mobile]
 Admin[Administrador]
 
 %% FRONTEND
 
-subgraph Frontend
+subgraph Frontend["Canais de Experiência"]
 
-WebApp[Azure App Service - Web Application]
+WebApp[Azure App Service - Portal Web / SPA]
+PatientMobileShell[App Shell do Paciente]
+DoctorMobileShell[App Shell do Médico]
+PatientWebView[WebView Paciente]
+DoctorWebView[WebView Médico]
+NativeBridge[Bridge Nativa de Saúde<br/>Apple Health / Google Fit]
 
 end
 
@@ -59,8 +73,9 @@ subgraph Ingestion
 EventHub[Azure Event Hub]
 DataFactory[Azure Data Factory]
 PublicData[Ingestão de Dados Públicos]
-WearableConn[Wearable Data Connector]
+WearableConn[Wearable Connector]
 WearableOAuth[OAuth 2.0 Manager]
+MobileIngestion[Ingestão Mobile de Métricas]
 
 end
 
@@ -131,10 +146,16 @@ AppInsights[Application Insights]
 
 end
 
-%% USERS
+%% USERS / CHANNELS
 
-Paciente --> WebApp
-Medico --> WebApp
+PacienteDesktop --> WebApp
+PacienteMobile --> PatientMobileShell
+PatientMobileShell --> PatientWebView
+PatientWebView -.carrega a mesma SPA.-> WebApp
+MedicoDesktop --> WebApp
+MedicoMobile --> DoctorMobileShell
+DoctorMobileShell --> DoctorWebView
+DoctorWebView -.carrega a mesma SPA.-> WebApp
 Admin --> WebApp
 
 %% FRONTEND → API
@@ -143,12 +164,19 @@ WebApp --> APIM
 APIM --> Backend
 Backend --> Auth
 
+%% MOBILE APP AS DATA PROVIDER
+
+PatientMobileShell --> NativeBridge
+NativeBridge --> MobileIngestion
+MobileIngestion --> WearableConn
+
 %% SECURITY
 
 Backend --> KeyVault
 Databricks --> KeyVault
 MLWorkspace --> KeyVault
 WearableOAuth --> KeyVault
+MobileIngestion --> KeyVault
 
 %% DATA FLOW
 
@@ -159,12 +187,13 @@ Backend --> WearableTables
 
 Backend --> EventHub
 
-%% WEARABLE INGESTION (BATCH ONLY - OPÇÃO A)
+%% WEARABLE INGESTION
 
 Backend --> WearableConn
 WearableConn --> WearableOAuth
 WearableOAuth --> WearableTables
 WearableConn --> Anonymization
+WearableConn --> EventHub
 
 %% DATA INGESTION
 
@@ -210,18 +239,65 @@ WearableConn --> Monitor
 
 ---
 
-## Sincronização de Wearables — OPÇÃO A (Batch Only)
+## Canais de Frontend
 
-A partir desta versão, a sincronização de dados wearables segue o modelo **Batch Only** (OPÇÃO A):
+### Desktop
+
+- O portal mostrado em [`novoprototipoweb.html`](novoprototipoweb.html) continua sendo o frontend principal para navegador desktop.
+- Não há mudança estrutural na experiência web: sidebar, dashboards e fluxo de autenticação seguem servidos como SPA/portal web.
+
+### Mobile
+
+- O protótipo [`novoprototipomobile.html`](novoprototipomobile.html) representa um **container nativo**.
+- O dashboard mobile não é um frontend independente do desktop: ele reaproveita o mesmo conteúdo web dentro de uma **WebView**.
+- Existem dois canais móveis: **app do paciente** e **app do médico**.
+- O app do paciente adiciona capacidades nativas que o browser desktop não possui, principalmente permissões, coleta local e sincronização de dados de saúde.
+- O app do médico oferece mobilidade para o dashboard clínico, sem assumir o papel de origem dos dados wearables.
+
+## Papel do App Mobile
+
+Os aplicativos móveis passam a ter responsabilidades arquiteturais distintas:
+
+1. **App do paciente**: carcaça de experiência para o dashboard, carregando o portal web em `WebView`.
+2. **App do paciente**: fornecedor de dados para o `wearable-connector`, coletando métricas nativas do dispositivo e do ecossistema de saúde do sistema operacional.
+3. **App do médico**: canal móvel para acesso ao dashboard clínico, listas de pacientes, alertas e acompanhamento.
+
+Na prática, isso significa:
+
+- autenticação do usuário e navegação principal continuam no portal web, inclusive quando carregado em `WebView`
+- permissões de saúde, consentimento do dispositivo e leitura de métricas acontecem no app do paciente
+- o app do médico consome os mesmos dados consolidados, mas não envia métricas nativas
+- o `wearable-connector` deixa de depender apenas de integrações server-to-server e passa a receber lotes/eventos originados pelo app do paciente
+- o backend continua consolidando dados clínicos e dados wearables para analytics, recomendação e inferência
+
+## Origem dos Dados de Wearables
+
+Após o ajuste arquitetural, a origem dos dados wearables fica dividida assim:
+
+- **desktop web**: permite visualizar dados e iniciar consentimentos, mas não coleta métricas nativas diretamente
+- **app do paciente**: coleta atividade, sono, frequência cardíaca, SpO2 e outras métricas disponíveis via integração nativa
+- **app do médico**: visualiza dashboards, riscos e pacientes monitorados em contexto móvel
+- **wearable-connector**: recebe, normaliza, valida e encaminha os dados coletados pelo app para armazenamento e processamento
+- **OAuth Manager**: permanece útil para provedores que exigem consentimento/token, mas o app móvel é a borda operacional da coleta
+
+---
+
+## Sincronização de Wearables
+
+A partir desta versão, a sincronização de dados wearables considera o **app do paciente como origem primária** das métricas coletadas em contexto móvel.
 
 ### Fluxo
 
 ```
-Wearable Connector (cron diário, ex: 00:00 UTC)
+App do Paciente (coleta local / permissões nativas)
     ↓
-[Recupera tokens do Key Vault]
+[Lê Apple Health / Google Fit / provedor autorizado]
     ↓
-[Consulta cada plataforma wearable dos últimos 24h]
+[Normaliza payload de atividade, sono, FC, SpO2 e estresse]
+    ↓
+[Envia lote/evento para o Wearable Connector]
+    ↓
+Wearable Connector
     ↓
 [Valida integridade + Normaliza unidades + Detecção de anomalias]
     ↓
@@ -238,6 +314,9 @@ Wearable Connector (cron diário, ex: 00:00 UTC)
 
 | Aspecto | Descrição |
 |---------|-----------|
+| Origem primária | App do paciente via WebView + bridge nativa |
+| Papel do desktop | Visualização e gestão, sem coleta local |
+| Papel do app do médico | Visualização clínica móvel, sem coleta local |
 | **Frequência** | Uma vez ao dia (configurável: diária, a cada 12h, etc) |
 | **Latência** | ~24h para dados estarem disponíveis em análise |
 | **Processamento** | Batch consolidado (não streaming) |

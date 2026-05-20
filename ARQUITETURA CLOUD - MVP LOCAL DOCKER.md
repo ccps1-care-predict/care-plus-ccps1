@@ -4,6 +4,11 @@ Este documento define uma arquitetura simplificada para o MVP do CarePredict exe
 
 Objetivo: validar fluxo funcional de medicina preventiva integrando dados clinicos e dados continuos de dispositivos wearables (ingestao -> processamento -> inferencia -> recomendacao -> agendamento) sem dependencia inicial de cloud publica.
 
+Os protótipos HTML atuais definem a experiência alvo deste MVP:
+
+- [`novoprototipoweb.html`](novoprototipoweb.html) representa o acesso desktop ao portal
+- [`novoprototipomobile.html`](novoprototipomobile.html) representa a base dos apps móveis do paciente e do médico, com dashboard em `WebView`; no caso do paciente, também há envio de dados para o `wearable-connector`
+
 ---
 
 ## 1. Objetivos do MVP
@@ -34,12 +39,17 @@ Objetivo: validar fluxo funcional de medicina preventiva integrando dados clinic
 ```mermaid
 flowchart LR
 
-Paciente[Paciente - App Web Angular]
-Medico[Medico - Dashboard Angular]
+PacienteDesktop[Paciente - Portal Web]
+PacienteMobile[Paciente - App Mobile]
+MedicoDesktop[Medico - Dashboard Web]
+MedicoMobile[Medico - App Mobile]
 WearableMock[Wearable Mock APIs]
 
 subgraph DockerHost[Docker Local - Docker Compose]
   Frontend[frontend-angular]
+  PatientMobileShell[patient-mobile-app-shell]
+  DoctorMobileShell[doctor-mobile-app-shell]
+  MobileBridge[patient-mobile-health-bridge]
   API[backend-api]
   Auth[auth-local]
   Scheduler[scheduling-service]
@@ -55,9 +65,15 @@ subgraph DockerHost[Docker Local - Docker Compose]
   PgAdmin[pgadmin opcional]
 end
 
-Paciente --> Frontend
-Medico --> Frontend
+PacienteDesktop --> Frontend
+PacienteMobile --> PatientMobileShell
+PatientMobileShell --> Frontend
+PatientMobileShell --> MobileBridge
+MedicoDesktop --> Frontend
+MedicoMobile --> DoctorMobileShell
+DoctorMobileShell --> Frontend
 WearableMock --> WearableConn
+MobileBridge --> WearableConn
 
 Frontend --> API
 API --> Auth
@@ -96,6 +112,15 @@ MLPredict --> Redis
 - Portal do paciente e dashboard medico.
 - Consome apenas o backend API.
 - Build e execucao via container Node/Nginx.
+- Mantem a experiencia desktop sem alteracoes estruturais.
+- Reaproveitado no mobile por meio de `WebView` nos apps do paciente e do medico.
+
+### 4.1.1 Apps Mobile Shell
+
+- Containers nativos responsaveis por hospedar o dashboard do frontend em `WebView`.
+- O app do paciente mantem autenticacao, navegacao mobile e pontos de extensao nativos para saude.
+- O app do medico mantem autenticacao, navegacao mobile e acesso ao dashboard clinico.
+- Nenhum deles substitui o frontend web; ambos o encapsulam para uso no celular.
 
 ### 4.2 Backend API
 
@@ -131,7 +156,8 @@ MLPredict --> Redis
 - Gerencia autorizacao OAuth 2.0 simulada com plataformas wearables (Apple, Google Fit, Fitbit).
 - Expoe endpoints REST para conectar/desconectar dispositivos e consultar dados de atividade, sono, FC e estresse.
 - Persiste tokens OAuth mockados no Postgres (sem chamadas reais a APIs externas no MVP).
-- Valida e normaliza dados recebidos do Wearable Mock APIs ou dados sinteticos locais.
+- Valida e normaliza dados recebidos do Wearable Mock APIs e do app do paciente.
+- Assume o app do paciente como um fornecedor adicional de payloads de saude no MVP.
 
 ### 4.8 Wearable Sync Worker
 
@@ -168,18 +194,19 @@ MLPredict --> Redis
 
 ### 5.2 Fluxo OAuth / Conexao de Wearable (simulado)
 
-1. Paciente solicita conexao de dispositivo no frontend.
-2. API repassa solicitacao ao Wearable Connector.
-3. Wearable Connector gera URL de autorizacao mockada.
-4. Frontend exibe tela de consentimento simulada.
-5. Apos consentimento, token OAuth mockado e salvo no Postgres.
-6. Dispositivo aparece como conectado no perfil do paciente.
+1. Paciente solicita conexao de dispositivo no dashboard web ou no app do paciente.
+2. No app do paciente, o dashboard roda em `WebView`, enquanto o shell nativo habilita permissoes locais.
+3. API repassa solicitacao ao Wearable Connector.
+4. Wearable Connector gera URL de autorizacao mockada.
+5. Frontend/WebView exibe tela de consentimento simulada.
+6. Apos consentimento, token OAuth mockado e salvo no Postgres.
+7. Dispositivo aparece como conectado no perfil do paciente.
 
 ### 5.3 Fluxo de sincronizacao de wearables
 
-1. Wearable Sync Worker executa periodicamente (ex: a cada hora em dev).
-2. Busca tokens validos no Postgres para cada paciente com wearable conectado.
-3. Chama Wearable Connector para obter dados sinteticos de atividade, sono, FC e estresse.
+1. O app do paciente coleta dados de saude do dispositivo e prepara o payload local.
+2. Wearable Sync Worker executa periodicamente (ex: a cada hora em dev) para complementar e consolidar sincronizacoes.
+3. O Wearable Connector recebe dados do app do paciente e/ou dados sinteticos do mock.
 4. Valida e normaliza os dados recebidos.
 5. Grava dados brutos no MinIO (camada raw).
 6. Calcula lifestyle features e grava em curated.
