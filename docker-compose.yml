@@ -6,10 +6,12 @@ services:
     build:
       context: ./modules/spa
       dockerfile: Dockerfile.yml
+      args:
+        SPA_BUILD_CONFIGURATION: ${SPA_BUILD_CONFIGURATION:-docker}
     container_name: care_plus_spa
     ports:
       - "4200:4200"
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
