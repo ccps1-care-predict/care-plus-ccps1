@@ -83,10 +83,9 @@ Dados do paciente:
 O sistema se conecta com dispositivos inteligentes (smartwatches, pulseiras de atividade) do paciente como:
 
 * **Apple Watch** — frequência cardíaca, atividade física
-* **Fitbit** — passos, sono, calorias queimadas
 * **Google Fit** — atividades, exercícios
-* **Garmin Connect** — dados de treino
-* **Oura Ring** — biometria avançada
+* **Garmin Connect** — dados de treino (Fase 2)
+* **Oura Ring** — biometria avançada (Fase 2)
 
 Isso captura **dados contínuos em tempo real** sobre o estilo de vida do paciente:
 
@@ -270,7 +269,6 @@ RESULTADO: Predição de risco muito mais precisa!
 Na **Fase 1 (MVP)**, o CarePredict se integra com:
 - 🍎 **Apple Health** — Apple Watch, iPhone
 - 🔵 **Google Fit** — Android Wear, Smartphones
-- 💪 **Fitbit** — Fitbit/Fitbit Sense
 
 Em **Fase 2 (Expansão)**:
 - 🟣 **Garmin Connect** — relógios Garmin

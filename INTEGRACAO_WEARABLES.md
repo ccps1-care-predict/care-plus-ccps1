@@ -19,7 +19,7 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 - Integrar dados comportamentais ao pipeline de feature engineering
 - Aprimorar a precisão dos modelos preditivos com informações do estilo de vida
 - Manter conformidade com LGPD e segurança de dados de saúde
-- Suportar múltiplas plataformas (Apple Health, Google Fit, Fitbit API, Garmin Connect)
+- Suportar múltiplas plataformas (Apple Health, Google Fit, Garmin Connect)
 
 ---
 
@@ -31,7 +31,6 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 |-----------|-----------|-------------------|
 | **Apple Health** | Apple Watch, iPhone | Passos, VO2Max, Frequência Cardíaca, Sono, Exercício |
 | **Google Fit** | Android Wear, Smartphones | Passos, Calorias, Frequência Cardíaca, Atividades |
-| **Fitbit API** | Fitbit/Fitbit Sense | Passos, Monitores de sono, Frequência Cardíaca, Exercícios |
 
 ### Fase 2 (Expansão)
 
@@ -75,13 +74,11 @@ end
 subgraph WearableDevices["Dispositivos e Fontes"]
     AppleWatch[Apple Watch/iPhone]
     AndroidWear[Android Wear/Smartphone]
-    Fitbit[Fitbit Device]
 end
 
 subgraph AuthLayer["Camada de Autenticação"]
     AppleAuth["Apple HealthKit<br/>OAuth 2.0"]
     GoogleAuth["Google Fit<br/>OAuth 2.0"]
-    FitbitAuth["Fitbit API<br/>OAuth 2.0"]
 end
 
 subgraph IngestLayer["Camada de Ingestão"]
@@ -139,12 +136,10 @@ PatientMobileShell --> NativeHealth
 
 AppleWatch --> NativeHealth
 AndroidWear --> NativeHealth
-Fitbit --> NativeHealth
 
 NativeHealth --> MobileGateway
 MobileGateway --> WearableConnector
 
-FitbitAuth --> WearableConnector
 AppleAuth --> MobileGateway
 GoogleAuth --> MobileGateway
 
@@ -293,9 +288,9 @@ Isso desacopla a experiência web da coleta local de sinais de saúde:
 ```sql
 CREATE TABLE wearable_devices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    patient_id UUID NOT NULL REFERENCES pacientes(id),
-    platform VARCHAR(50),  -- 'apple_health', 'google_fit', 'fitbit'
-    device_type VARCHAR(100),  -- 'Apple Watch', 'Fitbit Sense', etc
+    patient_id UUID NOT NULL REFERENCES patients(id),
+    platform VARCHAR(50),  -- 'apple_health', 'google_fit'
+    device_type VARCHAR(100),  -- 'Apple Watch', etc
     access_token_vault_key VARCHAR(255),  -- Referência segura ao Azure Key Vault
     refresh_token_vault_key VARCHAR(255),
     token_expiry TIMESTAMP,
@@ -311,7 +306,7 @@ CREATE TABLE wearable_devices (
 ```sql
 CREATE TABLE wearable_heartrate (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    patient_id UUID NOT NULL REFERENCES pacientes(id),
+    patient_id UUID NOT NULL REFERENCES patients(id),
     timestamp TIMESTAMP NOT NULL,
     heart_rate INT,  -- BPM
     heart_rate_variability FLOAT,  -- Variabilidade da FC
@@ -328,7 +323,7 @@ CREATE TABLE wearable_heartrate (
 ```sql
 CREATE TABLE wearable_activity (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    patient_id UUID NOT NULL REFERENCES pacientes(id),
+    patient_id UUID NOT NULL REFERENCES patients(id),
     date DATE NOT NULL,
     steps INT,
     distance_km FLOAT,
@@ -348,7 +343,7 @@ CREATE TABLE wearable_activity (
 ```sql
 CREATE TABLE wearable_sleep (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    patient_id UUID NOT NULL REFERENCES pacientes(id),
+    patient_id UUID NOT NULL REFERENCES patients(id),
     date DATE NOT NULL,
     sleep_start TIMESTAMP,
     sleep_end TIMESTAMP,
@@ -369,7 +364,7 @@ CREATE TABLE wearable_sleep (
 ```sql
 CREATE TABLE wearable_stress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    patient_id UUID NOT NULL REFERENCES pacientes(id),
+    patient_id UUID NOT NULL REFERENCES patients(id),
     timestamp TIMESTAMP NOT NULL,
     stress_level INT,  -- 0-100
     stress_category VARCHAR(20),  -- 'low', 'medium', 'high'
@@ -613,7 +608,6 @@ class WearableAuthManager:
 
 ### Fase 2 - Expansão (2-3 semanas)
 
-- [ ] Integração Fitbit
 - [ ] Feature engineering avançado
 - [ ] Monitoramento de qualidade de dados
 - [ ] Dashboard de dados wearables no portal do paciente
@@ -635,7 +629,6 @@ class WearableAuthManager:
 requests-oauthlib==1.3.0  # OAuth 2.0
 apple-health-api==0.1.0   # Apple HealthKit API
 google-auth-oauthlib==1.0.0
-fitbit-api==0.3.0
 pydantic==2.0.0           # Validação de dados
 sqlalchemy==2.0.0         # ORM
 python-dotenv==1.0.0
@@ -659,6 +652,5 @@ azure-keyvault-secrets    # Azure Key Vault
 
 - [Apple HealthKit Documentation](https://developer.apple.com/healthkit/)
 - [Google Fit API](https://developers.google.com/fit)
-- [Fitbit API Documentation](https://dev.fitbit.com/docs/)
 - [LGPD - Lei Geral de Proteção de Dados](http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)
 - [Azure Key Vault Best Practices](https://learn.microsoft.com/en-us/azure/key-vault/general/best-practices)

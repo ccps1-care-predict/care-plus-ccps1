@@ -15,7 +15,7 @@ Os protótipos HTML atuais definem a experiência alvo deste MVP:
 
 - Entregar um ambiente reproduzivel em maquina de desenvolvimento.
 - Permitir testes ponta a ponta com dados sinteticos e dados simulados de wearables.
-- Validar o fluxo de integracao OAuth 2.0 mockado com plataformas wearables (Apple, Google, Fitbit).
+- Validar o fluxo de integracao OAuth 2.0 mockado com plataformas wearables (Apple, Google).
 - Demonstrar a composicao de lifestyle features com dados de atividade, sono, FC e estresse.
 - Reduzir custo de infraestrutura na fase inicial.
 - Preparar base para migracao futura para Azure.
@@ -153,7 +153,7 @@ MLPredict --> Redis
 
 ### 4.7 Wearable Connector
 
-- Gerencia autorizacao OAuth 2.0 simulada com plataformas wearables (Apple, Google Fit, Fitbit).
+- Gerencia autorizacao OAuth 2.0 simulada com plataformas wearables (Apple, Google Fit).
 - Expoe endpoints REST para conectar/desconectar dispositivos e consultar dados de atividade, sono, FC e estresse.
 - Persiste tokens OAuth mockados no Postgres (sem chamadas reais a APIs externas no MVP).
 - Valida e normaliza dados recebidos do Wearable Mock APIs e do app do paciente.
@@ -254,6 +254,8 @@ Exemplo de portas locais:
 
 ## 7. Estrutura Sugerida de Servicos no Docker Compose
 
+> ⚠️ **Este compose é o desenho-alvo completo.** O `docker-compose.yml` real (raiz + `modules/api/docker-compose.yml`) cobre **apenas frontend, api, db e wearable-connector**. Os demais serviços (ml-inference, scheduling, wearable-mock-apis, wearable-sync-worker, recommendation-engine, risk-scoring-engine, data-worker-etl) estão implementados no código-fonte (`modules/services/`) mas ainda não orquestrados no compose real.
+
 ```yaml
 services:
   frontend-angular:
@@ -264,91 +266,65 @@ services:
   backend-api:
     build: ./modules/api
     ports: ["8080:8080"]
-    depends_on: [postgres, redis, ml-inference-service, wearable-connector]
+    depends_on: [postgres, wearable-connector]
     environment:
-      - DATABASE_URL=postgresql://carepredict:carepredict@postgres:5432/carepredict
-      - REDIS_URL=redis://redis:6379
-      - ML_SERVICE_URL=http://ml-inference-service:8001
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
       - WEARABLE_CONNECTOR_URL=http://wearable-connector:8002
 
   ml-inference-service:
-    build: ./modules/ml
+    build: ./modules/ml/smart-triage-health
     ports: ["8001:8001"]
-    depends_on: [minio, redis]
-    environment:
-      - MINIO_URL=http://minio:9000
-      - REDIS_URL=redis://redis:6379
+    depends_on: [postgres]
 
   wearable-connector:
-    build: ./modules/services/wearable
+    build: ./modules/services/wearable-connector
     ports: ["8002:8002"]
-    depends_on: [postgres, redis]
+    depends_on: [postgres]
     environment:
-      - DATABASE_URL=postgresql://carepredict:carepredict@postgres:5432/carepredict
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
       - WEARABLE_MOCK_URL=http://wearable-mock-apis:8003
       - OAUTH_MOCK_MODE=true
 
   wearable-mock-apis:
-    build: ./modules/services/wearable/mock
+    build: ./modules/services/wearable-mock-apis
     ports: ["8003:8003"]
-    # Simula respostas das APIs Apple HealthKit, Google Fit e Fitbit
-    # com dados sinteticos de atividade, sono, FC e estresse
 
   wearable-sync-worker:
-    build: ./modules/services/wearable/sync
-    depends_on: [wearable-connector, minio, postgres]
+    build: ./modules/services/wearable-sync-worker
+    depends_on: [wearable-connector, postgres]
     environment:
-      - DATABASE_URL=postgresql://carepredict:carepredict@postgres:5432/carepredict
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
       - WEARABLE_CONNECTOR_URL=http://wearable-connector:8002
-      - MINIO_URL=http://minio:9000
       - SYNC_INTERVAL_SECONDS=3600
 
   recommendation-engine:
-    build: ./modules/services/recommendation
+    build: ./modules/services/recommendation-engine
     depends_on: [ml-inference-service, postgres]
 
   risk-scoring-engine:
-    build: ./modules/services/risk
+    build: ./modules/services/risk-scoring-engine
     depends_on: [ml-inference-service]
 
   scheduling-service:
-    build: ./modules/services/scheduling
+    build: ./modules/services/scheduling-service
     depends_on: [postgres]
 
   data-worker-etl:
-    build: ./modules/data/worker
-    depends_on: [minio, postgres]
+    build: ./modules/services/data-worker-etl
+    depends_on: [postgres]
 
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: carepredict
-      POSTGRES_USER: carepredict
-      POSTGRES_PASSWORD: carepredict
+      POSTGRES_DB: care_plus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports: ["5432:5432"]
 
-  minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
-    volumes:
-      - minio_data:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-
 volumes:
   pg_data:
-  minio_data:
 ```
 
 ---
@@ -433,7 +409,7 @@ Mas isso é **opcional** e **não obrigatório** para o MVP funcionar.
 - Escalabilidade limitada ao host local.
 - Sem IAM corporativo completo.
 - Sem governanca de dados de nivel produtivo.
-- Wearable Connector usa modo mock (OAUTH_MOCK_MODE=true): sem chamadas reais a Apple, Google ou Fitbit.
+- Wearable Connector usa modo mock (OAUTH_MOCK_MODE=true): sem chamadas reais a Apple, Google ou outras.
 - Dados de wearables sao sinteticos (gerados via Wearable Mock APIs) — nao representam dados reais de pacientes.
 - Wearable Sync Worker opera com intervalo configuravel (padrao: 1 hora em dev, equivale ao batch diario de producao).
 
@@ -450,7 +426,7 @@ Quando o MVP estiver validado, migrar gradualmente:
 - Postgres local -> Azure SQL/PostgreSQL gerenciado.
 - Logs locais -> Azure Monitor/Application Insights.
 - Segredos em .env -> Azure Key Vault (incluindo tokens OAuth de wearables).
-- Wearable Mock APIs -> Integracao real com Apple HealthKit, Google Fit e Fitbit via OAuth 2.0 producao.
+- Wearable Mock APIs -> Integracao real com Apple HealthKit e Google Fit via OAuth 2.0 producao.
 - OAUTH_MOCK_MODE=false -> clientes OAuth registrados com ID de aplicacao real em cada plataforma.
 - Wearable Sync Worker local -> Azure Functions ou Azure Databricks para processamento distribuido.
 

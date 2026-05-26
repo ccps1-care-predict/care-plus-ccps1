@@ -5,7 +5,7 @@ Sistema de medicina preventiva baseado em dados clínicos, epidemiológicos e co
 O CarePredict utiliza:
 
 - dados clínicos do paciente
-- **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, etc)
+- **dados contínuos de dispositivos wearables** (Apple Watch, Google Fit, etc)
 - dados populacionais públicos
 - modelos de Machine Learning
 
@@ -84,7 +84,7 @@ Dispositivos inteligentes e suas APIs que fornecem dados contínuos de estilo de
 
 - **Apple HealthKit** — Apple Watch, iPhone
 - **Google Fit** — Android Wear, Smartphones
-- **Fitbit API** — Dispositivos Fitbit
+- **Apple Health** — Dispositivos Apple
 - **Garmin Connect** — Relógios Garmin
 - **Oura Ring** — Anéis inteligentes
 
@@ -210,7 +210,7 @@ Este é o fluxo central do CarePredict, agora potencializado com dados de wearab
 ```
 Paciente acessa o sistema
         ↓
-Paciente conecta dispositivos wearables (Apple Watch, Fitbit, etc)
+Paciente conecta dispositivos wearables (Apple Watch, Google Fit, etc)
         ↓
 CarePredict coleta dados clínicos
         ↓
@@ -238,7 +238,7 @@ Consulta é realizada com dados comportamentais como contexto
 ```
 Paciente autoriza acesso a dispositivo via OAuth
         ↓
-CarePredict conecta com plataforma (Apple Health, Google Fit, Fitbit)
+CarePredict conecta com plataforma (Apple Health, Google Fit)
         ↓
 Sistema sincroniza dados históricos (últimas 4 semanas)
         ↓

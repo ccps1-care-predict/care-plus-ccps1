@@ -2,7 +2,7 @@
 
 Este documento descreve a arquitetura cloud do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
 
-O sistema integra dados clínicos com dados contínuos de **dispositivos wearables** (Apple HealthKit, Google Fit, Fitbit, Garmin, Oura Ring) para compor uma visão 360° do paciente e elevar a precisão dos modelos preditivos em **15–25%**.
+O sistema integra dados clínicos com dados contínuos de **dispositivos wearables** (Apple HealthKit, Google Fit, Garmin, Oura Ring) para compor uma visão 360° do paciente e elevar a precisão dos modelos preditivos em **15–25%**.
 
 Com base nos protótipos [`novoprototipoweb.html`](novoprototipoweb.html) e [`novoprototipomobile.html`](novoprototipomobile.html), o frontend segue em dois canais complementares:
 
@@ -514,7 +514,7 @@ def analisar_preventiva(patient: Patient):
 Responsável pela ingestão de dados de dispositivos wearables em **batch diário**:
 
 * Executa uma vez ao dia (cron configurável)
-* Gerencia fluxo OAuth 2.0 com cada plataforma (Apple HealthKit, Google Fit, Fitbit, Garmin, Oura Ring)
+* Gerencia fluxo OAuth 2.0 com cada plataforma (Apple HealthKit, Google Fit, Garmin, Oura Ring)
 * Coleta dados dos últimos 24h: atividade, frequência cardíaca, sono e estresse
 * Sincronização batch: recupera histórico consolidado, valida, normaliza
 * Tokens de acesso armazenados com segurança no **Azure Key Vault**
@@ -542,7 +542,7 @@ Conformidade com **LGPD** é integrada em múltiplos níveis do sistema.
 
 **Requisitos adicionais para wearables:**
 
-* Consentimento explícito e **granular por plataforma** wearable (Apple, Google Fit, Fitbit, etc. — opt-in individual)
+* Consentimento explícito e **granular por plataforma** wearable (Apple, Google Fit, etc. — opt-in individual)
 * Revogação de acesso: remove tokens OAuth e agenda purge dos dados históricos
 * Dados brutos isolados em **zona PHI do Data Lake** (máxima restrição de acesso)
 * Pseudonimização **antes** de qualquer pipeline analítico (patient_id → token_anonimo)

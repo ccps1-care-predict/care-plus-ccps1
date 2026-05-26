@@ -7,7 +7,7 @@ Para a versão local com Docker, ver `ARQUITETURA CLOUD - MVP LOCAL DOCKER.md`.
 A arquitetura integra:
 
 - dados clínicos individuais
-- **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, etc)
+- **dados contínuos de dispositivos wearables** (Apple Watch, Google Fit, etc)
 - dados epidemiológicos públicos (DATASUS, IBGE, ANS)
 - pipelines de processamento e feature engineering
 - modelos de Machine Learning
@@ -34,7 +34,7 @@ Hosp[Sistemas Hospitalares]
 Claims[Dados de Sinistro / Plano de Saúde]
 App[Aplicativo do Paciente]
 
-Wearables["📱 Dispositivos Wearables<br/>(Apple, Google, Fitbit, Garmin, Oura)"]
+Wearables["📱 Dispositivos Wearables<br/>(Apple, Google, Garmin, Oura)"]
 WearableTypes["Atividade | FC | Sono | Estresse"]
 
 DATASUS[DATASUS]
@@ -265,7 +265,7 @@ O sistema integra dados contínuos de dispositivos inteligentes que capturam o *
 
 * **Apple HealthKit** — Apple Watch, iPhone
 * **Google Fit** — Android Wear, Smartphones
-* **Fitbit API** — Dispositivos Fitbit
+* **Apple Health** — Dispositivos Apple
 * **Garmin Connect** — Relógios Garmin
 * **Oura Ring** — Anéis inteligentes
 
@@ -334,7 +334,7 @@ com cache por 24h para minimizar latência e reduzir chamadas externas.
 **Fluxo de Wearables (OPÇÃO A)**:
 
 ```
-Plataforma Wearable (Apple Health, Google Fit, Fitbit)
+Plataforma Wearable (Apple Health, Google Fit)
         ↓
 OAuth 2.0 Authentication
         ↓
@@ -1007,7 +1007,7 @@ Os dados de wearables são armazenados em **dois locais estratégicos**:
 ### Fluxo de Dados de Wearables
 
 ```
-Wearable API (Apple/Google/Fitbit)
+Wearable API (Apple/Google)
         ↓
 [Wearable Data Connector - OAuth 2.0]
         ↓

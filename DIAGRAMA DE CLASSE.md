@@ -104,7 +104,6 @@ class WearablePlataforma {
   <<enumeration>>
   AppleHealth
   GoogleFit
-  Fitbit
   Garmin
   Oura
 }
@@ -511,8 +510,8 @@ Representa um dispositivo wearable conectado ao paciente.
 
 Atributos:
 
-* **plataforma** — Apple Health, Google Fit, Fitbit, Garmin, Oura
-* **tipoDispositivo** — Apple Watch, Fitbit Sense, etc
+* **plataforma** — Apple Health, Google Fit, Garmin, Oura
+* **tipoDispositivo** — Apple Watch, etc
 * **accessTokenVaultKey** — Referência segura ao Azure Key Vault (não armazena o token!)
 * **refreshTokenVaultKey** — Token de renovação (igualmente seguro)
 * **tokenExpiry** — Data de expiração do token
@@ -789,7 +788,7 @@ Orquestra a sincronização de dados wearables de forma segura e confiável.
 
 **Atributos**:
 - paciente_id: Qual paciente
-- plataforma: Qual wearable (Apple, Fitbit, etc)
+- plataforma: Qual wearable (Apple, etc)
 - lastSync: Último sincronização com sucesso
 - nextSync: Próxima sincronização planejada
 - syncStatus: Estado (pending, syncing, success, failed)
@@ -812,7 +811,7 @@ Orquestra a sincronização de dados wearables de forma segura e confiável.
 # �🔄 Fluxo de Dados: Do Wearable ao Modelo ML
 
 ```
-Dispositivo Wearable (Apple Watch, Fitbit, etc)
+Dispositivo Wearable (Apple Watch, etc)
     ↓
 WearableDevice + [HeartRate, Activity, Sleep, Stress]
     ↓
@@ -904,7 +903,7 @@ Representam o fluxo OAuth 2.0 completo.
 
 Enum `WearablePlataforma`:
 ```
-AppleHealth, GoogleFit, Fitbit, Garmin, Oura
+AppleHealth, GoogleFit, Garmin, Oura
 ```
 
 Cada paciente pode ter múltiplos `WearableDevice` (um por plataforma).

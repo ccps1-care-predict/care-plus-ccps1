@@ -14,7 +14,7 @@ Este documento descreve os principais fluxos de interação do sistema **CarePre
 
 # 1️⃣ Conexão com Dispositivo Wearable (OAuth 2.0)
 
-Fluxo de autenticação e autorização para conectar um dispositivo wearable (Apple Watch, Fitbit, Google Fit) ao sistema.
+Fluxo de autenticação e autorização para conectar um dispositivo wearable (Apple Watch, Google Fit) ao sistema.
 
 ```mermaid
 sequenceDiagram
@@ -22,7 +22,7 @@ sequenceDiagram
 participant Paciente
 participant Frontend
 participant API
-participant PlatformaWearable as Plataforma Wearable<br/>(Apple/Google/Fitbit)
+participant PlatformaWearable as Plataforma Wearable<br/>(Apple/Google)
 participant KeyVault
 participant WearableDB
 
@@ -493,7 +493,7 @@ O MVP local (Docker Compose) **segue o mesmo padrão batch**:
 
 | Fluxo | Cloud (Batch + On-Demand) | MVP (Batch) |
 |-------|-------|-----|
-| **1. OAuth 2.0** | Real (Apple/Google/Fitbit) | Mockado (OAUTH_MOCK_MODE=true) |
+| **1. OAuth 2.0** | Parcialmente real (pairing `/auth/pair`, Google Health REST API). Wearable-connector opera em mock. | Mockado (OAUTH_MOCK_MODE=true) |
 | **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
 | **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
 | **Dados Públicos** | PopulationDataService On-Demand + cache 24h | Não presente |

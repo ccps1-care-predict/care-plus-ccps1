@@ -10,7 +10,7 @@ Done
 
 ---
 
-# Estado atual do projeto (2026-03-26)
+# Estado atual do projeto (2026-05-26)
 
 ## Resumo rapido
 
@@ -52,14 +52,11 @@ Checklist:
 - [x] Healthchecks basicos
 
 ### Card: Persistencia local
-Story Points: **3**
+Story Points: **2**
 Status: **Done**
 
 Checklist:
 - [x] Postgres
-- [x] Redis
-- [x] MinIO
-- [x] Init de buckets MinIO (`raw`, `processed`, `curated`, `wearables-raw`, `wearables-features`)
 
 ### Card: Servicos de desenvolvimento
 Story Points: **2**
@@ -117,7 +114,7 @@ Status: **Done**
 Checklist:
 - [x] `core/layout/app-shell.component.ts`
 - [x] Features separadas por rota
-- [x] Rotas: `/`, `/risk`, `/recommendations`, `/wearables`, `/scheduling`
+- [x] Rotas: `/login`, `/dashboard`, `/patients`, `/consultations`, `/profile`, `/wearable-connect`
 - [x] README do SPA atualizado
 
 Sprint total entregue: **34 SP**
@@ -184,6 +181,20 @@ Checklist:
 - [x] Contexto `scheduling` na API
 - [x] Contratos entre API e servicos internos
 
+### Card: Integracao connector-app + adapters wearables
+Story Points: **13**
+Status: **Done**
+
+Checklist:
+- [x] Endpoints de pairing (`POST /auth/pair`, `POST /auth/pair/validate`)
+- [x] Health sync payload reestruturado (flat object → array de metricas)
+- [x] Google Health API REST adapter reescrito (4 endpoints corrigidos)
+- [x] Google Health Connect: 10 permissoes adicionadas no AndroidManifest
+- [x] Apple HealthKit: getWorkouts crash + hasPermissions corrigidos
+- [x] Suporte a `active_minutes` e `light_sleep_minutes`
+- [x] Fitbit removido de todo o codigo e documentacao
+- [x] Cobertura de testes: SPA 99.88% / API 99% / Flutter 37/37 passando
+
 ### Card: Persistencia real nos servicos
 Story Points: **8**
 Status: **In progress**
@@ -248,17 +259,26 @@ Objetivo: entregar fluxo navegavel com dados reais da API.
 
 ### Card: Conectar paginas de feature na API
 Story Points: **8**
+Status: **Done**
+
 Checklist:
-- [ ] Dashboard com dados reais
-- [ ] Tela de risco com retorno de engine
-- [ ] Tela de recomendacoes com priorizacao
+- [x] Dashboard com dados reais (health, biometric readings, trends, sleep)
+- [x] Tela de risco com retorno de engine (risk-scores mock)
+- [x] Tela de recomendacoes com priorizacao
+- [x] Tela de wearable connect (3-step wizard, OAuth, native permissions)
+- [x] Perfil e criacao de usuarios
+- [x] Consultas e agendamento (CRUD appointments + slots)
 
 ### Card: Fluxo de wearables e agendamento
 Story Points: **8**
+Status: **Done**
+
 Checklist:
-- [ ] Conectar/disconectar dispositivos
-- [ ] Exibir estado de sincronizacao
-- [ ] Agendar a partir de recomendacao
+- [x] Conectar/disconectar dispositivos (API + connector-app)
+- [x] Sincronizacao de dados de saude (foreground + background sync)
+- [x] Agendar a partir de recomendacao
+- [x] SPA ↔ Flutter bridge (auth_success, wearable_connected, permissions)
+- [x] Testes de integracao connector-app ↔ API
 
 ---
 
@@ -284,6 +304,6 @@ Checklist:
 
 ## Totais (visao atual)
 
-- Done: **65 SP**
+- Done: **94 SP**
 - In progress: **8 SP**
-- Backlog mapeado: **50 SP**
+- Backlog mapeado: **34 SP**
