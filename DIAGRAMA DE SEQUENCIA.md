@@ -1,6 +1,8 @@
-# 🧠 Diagrama de Sequência — CarePredict (Versão Revisada)
+# 🧠 Diagrama de Sequência — CarePredict (Target + MVP Simplificado)
 
-Este documento descreve os principais fluxos de interação do sistema **CarePredict**, incluindo:
+Este documento descreve os principais fluxos de interação do sistema **CarePredict**, incluindo a visão alvo da arquitetura e a simplificação usada no MVP local.
+
+> O fluxo abaixo serve como referência de desenho. O estado atual do repositório usa um caminho mais direto para wearables: SPA wearable-connect, bridge FlutterChannel quando disponível, fallback por deep link no navegador e API com correlation_id.
 
 1. Integração com Dispositivos Wearables
 2. Sincronização de dados wearables
@@ -14,7 +16,7 @@ Este documento descreve os principais fluxos de interação do sistema **CarePre
 
 # 1️⃣ Conexão com Dispositivo Wearable (OAuth 2.0)
 
-Fluxo de autenticação e autorização para conectar um dispositivo wearable (Apple Watch, Google Fit) ao sistema.
+Fluxo de autenticação e autorização para conectar um dispositivo wearable ao sistema. No MVP atual, o caminho principal passa pelo app conector/bridge e pelo fallback web, não por um OAuth mock isolado.
 
 ```mermaid
 sequenceDiagram
@@ -489,11 +491,11 @@ Cada fluxo detalha componentes, integrations e armazenamentos:
 
 ## Simplificações no MVP Local
 
-O MVP local (Docker Compose) **segue o mesmo padrão batch**:
+O MVP local (Docker Compose) **usa uma simplificação operacional** dos fluxos de cloud:
 
 | Fluxo | Cloud (Batch + On-Demand) | MVP (Batch) |
 |-------|-------|-----|
-| **1. OAuth 2.0** | Parcialmente real (pairing `/auth/pair`, Google Health REST API). Wearable-connector opera em mock. | Mockado (OAUTH_MOCK_MODE=true) |
+| **1. OAuth 2.0** | Visão alvo: pairing `/auth/pair`, Google Health REST API e orquestração cloud. | MVP atual: bridge FlutterChannel + fallback deep link + wearable-connector em memória |
 | **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
 | **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
 | **Dados Públicos** | PopulationDataService On-Demand + cache 24h | Não presente |
@@ -507,9 +509,9 @@ No MVP, o fluxo é mais simples:
 ```
 Wearable Sync Worker (cron diário)
     ↓
-[Consulta Postgres por tokens válidos]
+[Consulta estado local de conexão/sincronização]
     ↓
-[Wearable Connector com OAUTH_MOCK_MODE=true]
+[Wearable Connector local em memória]
     ↓
 [Retorna dados sintéticos ou mockados]
     ↓
@@ -517,10 +519,10 @@ Wearable Sync Worker (cron diário)
     ↓
 [Escreve em MinIO: raw, processed, curated]
     ↓
-[Atualiza Feature Store local]
+[Atualiza agregações locais / artefatos de análise]
 ```
 
-**Sem EventHub, sem AnonymizationService, sem streaming.**
+**Sem EventHub, sem AnonymizationService, sem streaming e sem Feature Store versionada no MVP local.**
 
 ### 3A-5A. Análise Preventiva no MVP
 
@@ -531,7 +533,7 @@ Da mesma forma, os fluxos 3 (Análise), 4 (Agendamento) e 5 (Exames) no MVP remo
 
 ## Compatibilidade MVP ↔️ Cloud
 
-A lógica de negócio é idêntica:
+A lógica de negócio alvo é idêntica:
 - Paciente conecta dispositivo (fluxo 1)
 - Dados sincronizam periodicamente (fluxo 2)
 - Análise preventiva combina fontes (fluxo 3)
@@ -582,6 +584,8 @@ Todos os fluxos de sequência referenciam **ClinicalDB** e **WearableDB** como b
 ---
 
 ## Feature Store nos Fluxos de Sequência
+
+> Esta seção é conceitual e descreve o comportamento alvo entre cloud e MVP. No MVP atual, a função equivalente é feita por artefatos e agregações locais, não por um serviço dedicado de feature store.
 
 A **Feature Store** aparece implicitamente em todo o Fluxo 3 (Análise Preventiva) e Fluxo 7 (Retreinamento):
 
@@ -650,6 +654,6 @@ population = pd.read_parquet("s3://analytics-features/population_features/curren
 # → Modelos fazem predições idênticas
 ```
 
-A **Feature Store garante que Cloud e MVP usam exatamente as mesmas features para análise**, permitindo que modelos treinem em Cloud e façam predições consistentes em MVP e vice-versa.
+A estratégia de features busca manter compatibilidade entre cloud e MVP para análise, com implementação diferente em cada ambiente.
 
 ---

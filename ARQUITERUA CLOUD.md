@@ -1,6 +1,8 @@
-# ☁️ Arquitetura Cloud — CarePredict (Versão Revisada)
+# ☁️ Arquitetura Cloud — CarePredict (Target Architecture)
 
-Este documento descreve a arquitetura cloud do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
+Este documento descreve a arquitetura cloud alvo do **CarePredict**, sistema de medicina preventiva baseado em Machine Learning desenvolvido para a CarePlus.
+
+> Esta é a visão de longo prazo da plataforma. O ambiente local atual cobre apenas o núcleo MVP, com frontend, API e serviços selecionados.
 
 O sistema integra dados clínicos com dados contínuos de **dispositivos wearables** (Apple HealthKit, Google Fit, Garmin, Oura Ring) para compor uma visão 360° do paciente e elevar a precisão dos modelos preditivos em **15–25%**.
 

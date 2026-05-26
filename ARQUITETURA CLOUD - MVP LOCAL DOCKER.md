@@ -1,6 +1,8 @@
 # Arquitetura Cloud - MVP Local com Docker (CarePredict)
 
-Este documento define uma arquitetura simplificada para o MVP do CarePredict executando 100% localmente com Docker.
+Este documento define a arquitetura alvo do MVP do CarePredict executando localmente com Docker.
+
+> O diagrama abaixo representa a direção do MVP local. Nem todos os serviços listados estão ativos ao mesmo tempo no compose real.
 
 Objetivo: validar fluxo funcional de medicina preventiva integrando dados clinicos e dados continuos de dispositivos wearables (ingestao -> processamento -> inferencia -> recomendacao -> agendamento) sem dependencia inicial de cloud publica.
 
@@ -15,7 +17,7 @@ Os protótipos HTML atuais definem a experiência alvo deste MVP:
 
 - Entregar um ambiente reproduzivel em maquina de desenvolvimento.
 - Permitir testes ponta a ponta com dados sinteticos e dados simulados de wearables.
-- Validar o fluxo de integracao OAuth 2.0 mockado com plataformas wearables (Apple, Google).
+- Validar o fluxo de integracao de wearables com Apple Health e Google Fit no MVP atual.
 - Demonstrar a composicao de lifestyle features com dados de atividade, sono, FC e estresse.
 - Reduzir custo de infraestrutura na fase inicial.
 - Preparar base para migracao futura para Azure.
@@ -29,7 +31,7 @@ Os protótipos HTML atuais definem a experiência alvo deste MVP:
 - Persistencia local: dados mantidos em volumes Docker.
 - Observabilidade minima: logs centralizados por servico.
 - Seguranca basica desde o inicio: secrets por env vars e segregacao de dados sensiveis.
-- Wearables como fonte contínua: dados de estilo de vida coletados via connectors mockados para simular integracoes reais no MVP.
+- Wearables como fonte contínua: dados de estilo de vida coletados via bridge mobile e fallback web no MVP.
 - Consentimento explícito: fluxo LGPD de autorizacao de wearables simulado desde o inicio.
 
 ---
@@ -153,10 +155,10 @@ MLPredict --> Redis
 
 ### 4.7 Wearable Connector
 
-- Gerencia autorizacao OAuth 2.0 simulada com plataformas wearables (Apple, Google Fit).
+- Gerencia a conexao de wearable do MVP com Apple Health e Google Fit.
 - Expoe endpoints REST para conectar/desconectar dispositivos e consultar dados de atividade, sono, FC e estresse.
-- Persiste tokens OAuth mockados no Postgres (sem chamadas reais a APIs externas no MVP).
-- Valida e normaliza dados recebidos do Wearable Mock APIs e do app do paciente.
+- Persiste estado da conexao e correlation_id no armazenamento local do serviço.
+- Valida e normaliza dados recebidos do app do paciente e de conectores locais.
 - Assume o app do paciente como um fornecedor adicional de payloads de saude no MVP.
 
 ### 4.8 Wearable Sync Worker
@@ -192,25 +194,24 @@ MLPredict --> Redis
 6. Recommendation Engine gera recomendacoes contextualizadas com padrao de estilo de vida.
 7. API persiste resultado e responde ao frontend (incluindo graficos de atividade, sono, FC, estresse).
 
-### 5.2 Fluxo OAuth / Conexao de Wearable (simulado)
+### 5.2 Fluxo OAuth / Conexao de Wearable (MVP)
 
 1. Paciente solicita conexao de dispositivo no dashboard web ou no app do paciente.
 2. No app do paciente, o dashboard roda em `WebView`, enquanto o shell nativo habilita permissoes locais.
-3. API repassa solicitacao ao Wearable Connector.
-4. Wearable Connector gera URL de autorizacao mockada.
-5. Frontend/WebView exibe tela de consentimento simulada.
-6. Apos consentimento, token OAuth mockado e salvo no Postgres.
-7. Dispositivo aparece como conectado no perfil do paciente.
+3. O SPA usa `FlutterChannel` quando disponivel ou fallback por deep link quando o bridge nao esta disponivel.
+4. A API repassa a solicitacao ao Wearable Connector com correlation_id.
+5. O conector registra a tentativa e devolve o resultado de conexao.
+6. O dispositivo aparece como conectado no perfil do paciente.
 
 ### 5.3 Fluxo de sincronizacao de wearables
 
 1. O app do paciente coleta dados de saude do dispositivo e prepara o payload local.
 2. Wearable Sync Worker executa periodicamente (ex: a cada hora em dev) para complementar e consolidar sincronizacoes.
-3. O Wearable Connector recebe dados do app do paciente e/ou dados sinteticos do mock.
+3. O Wearable Connector recebe dados do app do paciente e/ou dados sinteticos locais.
 4. Valida e normaliza os dados recebidos.
 5. Grava dados brutos no MinIO (camada raw).
 6. Calcula lifestyle features e grava em curated.
-7. Atualiza feature store local para uso pelo ML Inference Service.
+7. Atualiza agregacoes locais para uso pelo ML Inference Service.
 
 ### 5.4 Fluxo de agendamento
 
@@ -233,7 +234,7 @@ MLPredict --> Redis
 ## 6. Topologia de Rede e Dados
 
 - Rede unica Docker Compose para comunicacao interna.
-- Apenas frontend e API expostos ao host.
+- Apenas frontend e API expostos ao host no MVP base.
 - Banco e servicos internos acessiveis apenas por rede interna.
 - Volumes persistentes para Postgres e MinIO.
 
@@ -409,8 +410,8 @@ Mas isso é **opcional** e **não obrigatório** para o MVP funcionar.
 - Escalabilidade limitada ao host local.
 - Sem IAM corporativo completo.
 - Sem governanca de dados de nivel produtivo.
-- Wearable Connector usa modo mock (OAUTH_MOCK_MODE=true): sem chamadas reais a Apple, Google ou outras.
-- Dados de wearables sao sinteticos (gerados via Wearable Mock APIs) — nao representam dados reais de pacientes.
+- Integracoes wearable podem operar com dados sinteticos e conectores locais durante validacao do MVP.
+- Dados de wearables usados no ambiente local nao devem ser tratados como dados reais de pacientes.
 - Wearable Sync Worker opera com intervalo configuravel (padrao: 1 hora em dev, equivale ao batch diario de producao).
 
 Este desenho e proposital para acelerar validacao funcional e tecnica.
@@ -426,8 +427,8 @@ Quando o MVP estiver validado, migrar gradualmente:
 - Postgres local -> Azure SQL/PostgreSQL gerenciado.
 - Logs locais -> Azure Monitor/Application Insights.
 - Segredos em .env -> Azure Key Vault (incluindo tokens OAuth de wearables).
-- Wearable Mock APIs -> Integracao real com Apple HealthKit e Google Fit via OAuth 2.0 producao.
-- OAUTH_MOCK_MODE=false -> clientes OAuth registrados com ID de aplicacao real em cada plataforma.
+- Wearable Mock APIs -> Integracao real com Apple HealthKit e Google Fit via OAuth 2.0 em producao.
+- Integracao local simulada -> clientes OAuth registrados com credenciais reais por plataforma.
 - Wearable Sync Worker local -> Azure Functions ou Azure Databricks para processamento distribuido.
 
 Assim, o time preserva a arquitetura logica e troca apenas a camada de infraestrutura. O modulo de wearables foi projetado com factory pattern para suportar essa transicao sem reescrita de logica de negocio.
@@ -464,7 +465,7 @@ Este MVP **segue intencionalmente uma arquitetura simplificada** da Cloud, com a
 
 | Aspecto | Cloud | MVP |
 |--------|-------|-----|
-| Feature Store | Databricks Feature Store | MinIO/curated (Parquet) |
+| Feature Store | Databricks Feature Store | Camada curated no MinIO (aproximação local) |
 | Registry | Azure ML Model Registry | Arquivo local versionado |
 | Inference | Azure ML Inference Endpoint | Serviço HTTP simples |
 
@@ -484,7 +485,7 @@ Wearable Connector      →         wearable-connector
 Wearable Sync Worker    →         wearable-sync-worker
 Databricks/Synapse      →         data-worker-etl
 Lifestyle Features      →         Cálculo no sync-worker
-Feature Store           →         MinIO curated layer
+Feature Store           →         Camada curated no MinIO
 Azure ML Training       →         Offline (script Python)
 Azure ML Inference      →         ml-inference-service
 Risk Engine             →         risk-scoring-engine
@@ -511,9 +512,11 @@ Azure Monitor           →         Docker logs + healthcheck
 
 ### Feature Store MVP vs Cloud
 
+> Nesta seção, "Feature Store" no MVP representa apenas a aproximação local via camada curated no MinIO, não um serviço dedicado de feature store.
+
 | Aspecto | Cloud | MVP |
 |--------|-------|-----|
-| **Implementação** | Databricks Feature Store | MinIO curated layer |
+| **Implementação** | Databricks Feature Store | Camada curated no MinIO |
 | **Versionamento** | Automático | Manual (v1/, v2/folders) |
 | **Lineage** | Interface web integrada | Documentado em código |
 | **Quality Checks** | Integrados | Script Python |

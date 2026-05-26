@@ -1,8 +1,10 @@
-# 📱 Integração com Dispositivos Wearables — CarePredict
+# 📱 Integração com Dispositivos Wearables — CarePredict (Estado Atual + Roadmap)
 
 ## Visão Geral
 
 Este documento descreve a estratégia de integração com dispositivos wearables no CarePredict para capturar dados contínuos do estilo de vida (atividade física, frequência cardíaca, sono, estresse) e enriquecer os modelos preditivos de risco.
+
+> O que está implementado hoje é o fluxo de Apple Health/Google Fit via app do paciente, WebView e fallback por deep link. As demais plataformas abaixo permanecem como roadmap.
 
 O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototipoweb.html) e [`novoprototipomobile.html`](novoprototipomobile.html) como referência de experiência:
 
@@ -19,13 +21,13 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 - Integrar dados comportamentais ao pipeline de feature engineering
 - Aprimorar a precisão dos modelos preditivos com informações do estilo de vida
 - Manter conformidade com LGPD e segurança de dados de saúde
-- Suportar múltiplas plataformas (Apple Health, Google Fit, Garmin Connect)
+- Suportar múltiplas plataformas (Apple Health e Google Fit no MVP atual; Garmin Connect como roadmap)
 
 ---
 
 ## Dispositivos e Plataformas Suportadas
 
-### Fase 1 (MVP)
+### Fase 1 (MVP atual)
 
 | Plataforma | Dispositivos | Dados Coletados |
 |-----------|-----------|-------------------|
@@ -37,6 +39,14 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 - **Garmin Connect** — Relógios Garmin
 - **Oura Ring** — Dados biométricos avançados
 - **Whoop** — Análise de recuperação e treino
+
+## Estado operacional hoje
+
+- Fluxo principal: `wearable-connect` no SPA.
+- Bridge nativo: `FlutterChannel` no app conector.
+- Fallback web: deep link `careplus://pair`.
+- Plataformas efetivamente expostas na UI atual: Apple Watch e Google Fit.
+- Correlation ID é propagado no pareamento, na API e no serviço wearable-connector.
 
 ---
 

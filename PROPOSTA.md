@@ -66,6 +66,8 @@ Isso cria um **ciclo de medicina preventiva orientado por dados**.
 
 # 4️⃣ Fluxo da Solução
 
+> Nesta proposta, a etapa de wearables mostra a direção do produto. No estado atual, o MVP expõe Apple Health e Google Fit; Garmin Connect e Oura Ring ficam como expansão.
+
 ### Etapa 1 — Coleta de dados
 
 Dados do paciente:
@@ -84,8 +86,8 @@ O sistema se conecta com dispositivos inteligentes (smartwatches, pulseiras de a
 
 * **Apple Watch** — frequência cardíaca, atividade física
 * **Google Fit** — atividades, exercícios
-* **Garmin Connect** — dados de treino (Fase 2)
-* **Oura Ring** — biometria avançada (Fase 2)
+* **Garmin Connect** — dados de treino (Fase 2 / roadmap)
+* **Oura Ring** — biometria avançada (Fase 2 / roadmap)
 
 Isso captura **dados contínuos em tempo real** sobre o estilo de vida do paciente:
 

@@ -1,6 +1,8 @@
-# 🏥 Diagrama de Caso de Uso — CarePredict (Versão Revisada)
+# 🏥 Diagrama de Caso de Uso — CarePredict (MVP + Roadmap)
 
 Sistema de medicina preventiva baseado em dados clínicos, epidemiológicos e comportamentais proposto para a **CarePlus**.
+
+> O documento abaixo mistura casos de uso entregues no MVP com expansão futura. As plataformas de wearables efetivamente expostas hoje são Apple Health e Google Fit; Garmin e Oura permanecem como roadmap.
 
 O CarePredict utiliza:
 
@@ -78,15 +80,15 @@ Esses dados ajudam a melhorar a análise de risco populacional.
 
 ---
 
-## Plataformas de Wearables (Novo!)
+## Plataformas de Wearables (MVP + Roadmap)
 
 Dispositivos inteligentes e suas APIs que fornecem dados contínuos de estilo de vida:
 
 - **Apple HealthKit** — Apple Watch, iPhone
 - **Google Fit** — Android Wear, Smartphones
 - **Apple Health** — Dispositivos Apple
-- **Garmin Connect** — Relógios Garmin
-- **Oura Ring** — Anéis inteligentes
+- **Garmin Connect** — Relógios Garmin *(roadmap)*
+- **Oura Ring** — Anéis inteligentes *(roadmap)*
 
 Fornecem dados de:
 - Atividade física (passos, exercício)
@@ -210,7 +212,7 @@ Este é o fluxo central do CarePredict, agora potencializado com dados de wearab
 ```
 Paciente acessa o sistema
         ↓
-Paciente conecta dispositivos wearables (Apple Watch, Google Fit, etc)
+Paciente conecta dispositivos wearables (Apple Health/Google Fit no MVP)
         ↓
 CarePredict coleta dados clínicos
         ↓

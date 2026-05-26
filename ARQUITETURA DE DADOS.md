@@ -1,13 +1,15 @@
-# 🧠 Arquitetura de Dados — CarePredict (Cloud Production)
+# 🧠 Arquitetura de Dados — CarePredict (Target Cloud)
 
-Este documento descreve a arquitetura de dados do **CarePredict** na **Cloud Production** (Azure).
+Este documento descreve a arquitetura de dados alvo do **CarePredict** na **Cloud Production** (Azure).
 
 Para a versão local com Docker, ver `ARQUITETURA CLOUD - MVP LOCAL DOCKER.md`.
+
+> O conteúdo abaixo representa a visão de longo prazo. O MVP local atual opera com uma pilha menor e não implementa todo o fluxo de Data Lake, Feature Store e MLOps descrito aqui.
 
 A arquitetura integra:
 
 - dados clínicos individuais
-- **dados contínuos de dispositivos wearables** (Apple Watch, Google Fit, etc)
+- **dados contínuos de dispositivos wearables** (Apple Health e Google Fit no MVP atual; demais fontes como expansão)
 - dados epidemiológicos públicos (DATASUS, IBGE, ANS)
 - pipelines de processamento e feature engineering
 - modelos de Machine Learning

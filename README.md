@@ -32,7 +32,7 @@ O CarePredict foi concebido para atuar de forma preventiva na jornada de saúde 
 
 - dados clínicos individuais
 - dados populacionais públicos (DATASUS, IBGE e ANS)
-- **dados contínuos de dispositivos wearables** (Apple Watch, Fitbit, Google Fit, Garmin)
+- **dados contínuos de dispositivos wearables** (Apple Watch/Apple Health e Google Fit no MVP atual; Fitbit, Garmin e Oura como expansão)
 - **portal web único reutilizado em desktop e em apps mobile via WebView**
 - modelos de Machine Learning para risco de doenças
 - motor de recomendação preventiva
@@ -118,9 +118,9 @@ Os protótipos atuais definem dois canais:
 **Fase 1 (MVP):**
 - 🍎 **Apple Health** — Apple Watch, iPhone
 - 🔵 **Google Fit** — Android Wear, Smartphones
-- 💪 **Fitbit** — Fitbit/Fitbit Sense
 
 **Fase 2 (Expansão):**
+- 💪 **Fitbit** — Fitbit/Fitbit Sense
 - 🟣 **Garmin Connect** — relógios Garmin
 - 💍 **Oura Ring** — análise biométrica avançada
 
@@ -181,7 +181,9 @@ Para acelerar validacoes tecnicas e funcionais, o projeto possui uma arquitetura
 O estado atual executavel contempla:
 
 - frontend Angular em `modules/spa`
+- app Flutter bridge em `modules/connector-app` para permissões nativas e WebView mobile
 - backend FastAPI em `modules/api`
+- serviço local `wearable-connector` em `modules/services/wearable-connector`
 - migrations Alembic executadas antes da API
 - Postgres 16 como banco transacional
 - seed de dados mockados opcional, acionado por profile
@@ -267,7 +269,7 @@ Para remover também os volumes persistentes locais:
 docker compose down -v
 ```
 
-### Servicos previstos no MVP local
+### Servicos ativos no compose base do MVP local
 
 Servicos atuais do modo base (`docker compose up --build`):
 
@@ -332,17 +334,17 @@ Para validar rapidamente o ambiente local, prefira iniciar pelo modo base. Use `
 A arquitetura de dados contempla:
 
 - **fontes clínicas** (EHR, laboratório, hospital, sinistro, app)
-- **fontes de wearables** (Apple Health, Google Fit, Fitbit, Garmin, Oura)
+- **fontes de wearables** (Apple Health e Google Fit no MVP atual; Fitbit, Garmin e Oura como expansão)
   - Atividade física (passos, exercício, duração)
   - Frequência cardíaca (repouso, máxima, variabilidade)
   - Sono (duração, qualidade, coerência)
   - Estresse (nível, tempo de recuperação)
 - fontes públicas (DATASUS, IBGE, ANS)
 - camada de privacidade com anonimização/pseudonimização (LGPD compliant)
-- Data Lake por zonas (PHI, Raw, Processed, Curated) com **dados wearables isolados**
+- Data Lake por zonas (PHI, Raw, Processed, Curated) como visão de arquitetura; no MVP local isso é simplificado
 - camada analítica (warehouse/BI) com **relatórios de estilo de vida**
-- feature engineering com **lifestyle features** + feature store
-- ciclo de ML com treino, validação, registry e serving com **modelos enriquecidos**
+- feature engineering com **lifestyle features** + feature store como target arquitetural
+- ciclo de ML com treino, validação, registry e serving com **modelos enriquecidos** como visão alvo
 - feedback clínico para melhoria contínua
 
 Documento completo: [ARQUITETURA DE DADOS.md](ARQUITETURA%20DE%20DADOS.md)

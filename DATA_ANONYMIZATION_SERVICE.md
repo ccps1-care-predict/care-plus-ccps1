@@ -1,22 +1,24 @@
-# 🔐 Data Anonymization Service — Design & Implementação
+# 🔐 Data Anonymization Service — Target Cloud Design
 
 ## 📋 Visão Geral
 
-O **Data Anonymization Service** é um microserviço crítico para LGPD que processa e anonimiza dados ensíveis antes de persistência no Data Lake ou banco transacional.
+O **Data Anonymization Service** é um serviço de arquitetura-alvo para LGPD que processa e anonimiza dados sensíveis antes de persistência no Data Lake ou banco transacional.
 
-**Status**: Cloud Production ✅ | MVP Local ❌ (intencionalmente ausente)
+**Status**: Visão cloud / target arquitetural. Não faz parte do MVP local atual.
+
+> Este documento descreve o comportamento desejado para a camada cloud. No MVP local, a anonimização completa não está implementada como serviço dedicado.
 
 ---
 
 ## 🎯 Objetivos
 
-1. ✅ Garantir conformidade LGPD ("anonimização de facto")
-2. ✅ Pseudonimizar dados pessoais (patient_id → token)
-3. ✅ Mascarar informações sensíveis
-4. ✅ Manter auditoria completa
-5. ✅ Processar com latência <100ms
-6. ✅ Ser reversível internamente (auditoria)
-7. ✅ Falhar seguro (Dead Letter Queue se houver erro)
+1. Garantir conformidade LGPD ("anonimização de facto")
+2. Pseudonimizar dados pessoais (patient_id → token)
+3. Mascarar informações sensíveis
+4. Manter auditoria completa
+5. Processar com latência <100ms
+6. Ser reversível internamente (auditoria)
+7. Falhar seguro (Dead Letter Queue se houver erro)
 
 ---
 
@@ -116,7 +118,7 @@ O **Data Anonymization Service** é um microserviço crítico para LGPD que proc
 Wearable Connector outputs evento:
 {
   "patient_id": "12345",
-  "device_id": "fitbit_abc123",
+  "device_id": "wearable_abc123",
   "steps": 8920,
   "heart_rate": 62,
   "sleep_hours": 7.2,

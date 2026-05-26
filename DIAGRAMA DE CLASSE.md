@@ -1,6 +1,8 @@
-# 🏥 Diagrama de Classes — CarePredict (Versão Revisada)
+# 🏥 Diagrama de Classes — CarePredict (Modelo Conceitual + Roadmap)
 
-Este diagrama representa o modelo conceitual do sistema **CarePredict**, incluindo:
+Este diagrama representa o modelo conceitual do sistema **CarePredict**, incluindo componentes do MVP atual e extensões de roadmap.
+
+> No código atual, o suporte efetivo a wearables está concentrado em Apple Health e Google Fit. As demais plataformas do diagrama representam expansão planejada do domínio.
 
 - domínio clínico do paciente
 - **dados contínuos de dispositivos wearables** (novo!)
