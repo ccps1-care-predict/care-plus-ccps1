@@ -11,7 +11,7 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 - no **desktop**, o portal web continua sendo acessado diretamente
 - no **mobile do paciente**, o dashboard é carregado em **WebView**
 - no **mobile do médico**, o dashboard clínico também é carregado em **WebView**
-- o **app do paciente** também passa a ser a borda de coleta que alimenta o `wearable-connector`
+- o **app do paciente** também passa a ser a borda de coleta que alimenta a API principal
 
 ---
 
@@ -42,11 +42,12 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 
 ## Estado operacional hoje
 
+- O antigo `wearable-connector` foi consolidado na API principal; o fluxo atual persiste tokens, consentimento e devices no backend.
 - Fluxo principal: `wearable-connect` no SPA.
 - Bridge nativo: `FlutterChannel` no app conector.
 - Fallback web: deep link `careplus://pair`.
 - Plataformas efetivamente expostas na UI atual: Apple Watch e Google Fit.
-- Correlation ID é propagado no pareamento, na API e no serviço wearable-connector.
+- Correlation ID é propagado no pareamento e na API.
 
 ---
 
@@ -63,7 +64,7 @@ O desenho abaixo considera os protótipos [`novoprototipoweb.html`](novoprototip
 - O protótipo mobile representa um **app container**.
 - O dashboard clínico/paciente é carregado em uma **WebView**.
 - O médico também possui app móvel para consumir o dashboard clínico.
-- Apenas o app do paciente solicita permissões locais, lê dados de saúde e envia os payloads para o `wearable-connector`.
+- Apenas o app do paciente solicita permissões locais, lê dados de saúde e envia os payloads para a API principal.
 
 ---
 
@@ -203,7 +204,7 @@ Paciente → App Mobile do Paciente → WebView do portal
                                 ↓
                   Consentimento / token do provedor wearable
                                 ↓
-                  Envio seguro para o wearable-connector
+                  Envio seguro para a API principal
 
 Médico:
 Médico → App Mobile do Médico → WebView do dashboard clínico
@@ -214,7 +215,7 @@ Médico → App Mobile do Médico → WebView do dashboard clínico
 **No App do Paciente (origem primária):**
 - Leitura local de Apple Health / Google Fit / sensores autorizados
 - Captura de eventos de frequência cardíaca, passos, sono e SpO2
-- Empacotamento de payloads para sincronização com o `wearable-connector`
+- Empacotamento de payloads para sincronização com a API principal
 
 **No App do Médico:**
 - Consumo móvel do dashboard clínico
@@ -238,7 +239,7 @@ Médico → App Mobile do Médico → WebView do dashboard clínico
 # Pseudocódigo
 1. patient_mobile_app.collect_native_health_data(patient_id)
 2. patient_mobile_app.normalize_and_sign_payload()
-3. wearable_connector.receive_mobile_sync(payload)
+3. backend_api.receive_mobile_sync(payload)
 4. validate_data_integrity()
 5. anonymize_pii(data)
 6. store_in_data_lake(raw_zone)
@@ -279,7 +280,7 @@ Os apps móveis deixam de ser apenas um invólucro visual e assumem funções di
 
 1. **App do paciente**: hospedar o dashboard em `WebView`, reaproveitando o frontend existente.
 2. **App do paciente**: solicitar permissões nativas e interagir com os provedores de saúde do dispositivo.
-3. **App do paciente**: fornecer dados ao `wearable-connector`, enviando payloads normalizados para o backend de ingestão.
+3. **App do paciente**: fornecer dados à API principal, enviando payloads normalizados para o backend de ingestão.
 4. **App do médico**: hospedar o dashboard clínico em `WebView` para uso móvel pela equipe assistencial.
 
 Isso desacopla a experiência web da coleta local de sinais de saúde:
@@ -287,7 +288,7 @@ Isso desacopla a experiência web da coleta local de sinais de saúde:
 - o frontend continua unificado
 - o app do paciente adiciona capacidades nativas
 - o app do médico amplia o acesso móvel ao painel clínico
-- o `wearable-connector` permanece como o ponto central de ingestão, normalização e governança
+- a API principal permanece como o ponto central de ingestão, normalização e governança
 
 ---
 

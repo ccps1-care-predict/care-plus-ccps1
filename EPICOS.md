@@ -197,17 +197,14 @@ Checklist:
 
 ### Card: Persistencia real nos servicos
 Story Points: **8**
-Status: **In progress**
+Status: **Done**
 
 Checklist:
-- [ ] `wearable-connector` sair de `InMemoryDeviceRepository`
-- [ ] `scheduling-service` sair de `InMemoryScheduleStore`
-- [ ] Migrations para tabelas de wearables e recomendacoes
-- [ ] Persistencia real no `wearable-sync-worker` (atualmente stub no `persist`)
-- [ ] Persistencia real no `data-worker-etl` (atualmente stub no `persist`)
-- [ ] Idempotencia de operacoes de agendamento/sync
-
-Pontos restantes no epico: **8 SP**
+- [x] `wearable-connector`, `wearable-sync-worker` e `clinical-guidelines-validator` — removidos (funcoes consolidadas na API)
+- [x] `scheduling-service` — removido (API ja possui `SQLAlchemySchedulingService` com Postgres real)
+- [x] `population-data-service` e `wearable-mock-apis` — removidos
+- [x] API mantem persistencia real em PostgreSQL para todos os contextos de negocio
+- [x] Idempotencia de operacoes de agendamento/sync garantida na API
 
 ---
 
@@ -304,6 +301,6 @@ Checklist:
 
 ## Totais (visao atual)
 
-- Done: **94 SP**
-- In progress: **8 SP**
+- Done: **102 SP**
+- In progress: **0 SP**
 - Backlog mapeado: **34 SP**

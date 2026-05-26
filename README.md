@@ -32,7 +32,7 @@ O CarePredict foi concebido para atuar de forma preventiva na jornada de saúde 
 
 - dados clínicos individuais
 - dados populacionais públicos (DATASUS, IBGE e ANS)
-- **dados contínuos de dispositivos wearables** (Apple Watch/Apple Health e Google Fit no MVP atual; Fitbit, Garmin e Oura como expansão)
+- **dados contínuos de dispositivos wearables** (Apple Watch/Apple Health e Google Fit no MVP atual; Garmin e Oura como expansão)
 - **portal web único reutilizado em desktop e em apps mobile via WebView**
 - modelos de Machine Learning para risco de doenças
 - motor de recomendação preventiva
@@ -120,7 +120,6 @@ Os protótipos atuais definem dois canais:
 - 🔵 **Google Fit** — Android Wear, Smartphones
 
 **Fase 2 (Expansão):**
-- 💪 **Fitbit** — Fitbit/Fitbit Sense
 - 🟣 **Garmin Connect** — relógios Garmin
 - 💍 **Oura Ring** — análise biométrica avançada
 
@@ -147,7 +146,7 @@ Os protótipos atuais definem dois canais:
 2. **App do paciente** — Carrega o dashboard em `WebView` e coleta dados nativos de saúde
 3. **App do médico** — Carrega o dashboard clínico em `WebView` para uso móvel
 4. **Consentimento e coleta** — O app do paciente solicita permissões nativas e conecta wearables
-5. **Sincronização** — O app do paciente envia métricas coletadas para o `wearable-connector`
+5. **Sincronização** — O app do paciente envia métricas coletadas para a API principal
 6. **Processamento** — Normalização, validação, enriquecimento
 7. **Modelagem e recomendação** — ML e insights contextualizados com estilo de vida
 
@@ -183,7 +182,6 @@ O estado atual executavel contempla:
 - frontend Angular em `modules/spa`
 - app Flutter bridge em `modules/connector-app` para permissões nativas e WebView mobile
 - backend FastAPI em `modules/api`
-- serviço local `wearable-connector` em `modules/services/wearable-connector`
 - migrations Alembic executadas antes da API
 - Postgres 16 como banco transacional
 - seed de dados mockados opcional, acionado por profile
@@ -334,7 +332,7 @@ Para validar rapidamente o ambiente local, prefira iniciar pelo modo base. Use `
 A arquitetura de dados contempla:
 
 - **fontes clínicas** (EHR, laboratório, hospital, sinistro, app)
-- **fontes de wearables** (Apple Health e Google Fit no MVP atual; Fitbit, Garmin e Oura como expansão)
+- **fontes de wearables** (Apple Health e Google Fit no MVP atual; Garmin e Oura como expansão)
   - Atividade física (passos, exercício, duração)
   - Frequência cardíaca (repouso, máxima, variabilidade)
   - Sono (duração, qualidade, coerência)
@@ -446,7 +444,7 @@ Este repositorio combina documentacao de produto/arquitetura com implementacao l
 - [docker-compose.yml](docker-compose.yml) — orquestracao local raiz
 - [modules/api](modules/api) — API FastAPI, migrations, seed mock e testes
 - [modules/spa](modules/spa) — SPA Angular
-- [modules/services](modules/services) — baseline arquitetural dos servicos auxiliares
+- [modules/services](modules/services) — risk-scoring-engine e recommendation-engine
 - [modules/ml](modules/ml) — baseline arquitetural de inferencia/ML
 - [modules/data](modules/data) — baseline arquitetural de pipelines de dados
 
@@ -467,7 +465,6 @@ Pendencias principais:
 
 - Ampliar cobertura automatizada da SPA conforme plano em [CODEX.md](CODEX.md).
 - Reexecutar suites de API com `TestClient` em ambiente local sem bloqueio de sandbox.
-- Evoluir os servicos auxiliares de ML, wearables, data e recomendacao hoje documentados como baseline arquitetural.
 
 ## Equipe
 

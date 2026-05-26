@@ -11,7 +11,9 @@ Com base nos protótipos [`novoprototipoweb.html`](novoprototipoweb.html) e [`no
 - **desktop**: o portal web permanece como está, acessado diretamente pelo navegador
 - **mobile paciente**: o dashboard é carregado dentro de um **app shell** via **WebView**
 - **mobile médico**: o médico também possui um **app shell** com acesso móvel ao dashboard clínico
-- **app do paciente**: além de hospedar o dashboard, também atua como **fonte de dados** para o `wearable-connector`, coletando informações nativas de saúde e enviando-as para ingestão
+- **app do paciente**: além de hospedar o dashboard, também atua como **fonte de dados** para a API principal, coletando informações nativas de saúde e enviando-as para ingestão
+
+> Referências históricas a `Wearable Connector` e `Scheduling Service` no diagrama abaixo representam o desenho inicial. No código atual do MVP, essas responsabilidades foram consolidadas na API principal.
 
 A arquitetura foi projetada utilizando **Microsoft Azure** e segue princípios de:
 
@@ -261,7 +263,7 @@ WearableConn --> Monitor
 Os aplicativos móveis passam a ter responsabilidades arquiteturais distintas:
 
 1. **App do paciente**: carcaça de experiência para o dashboard, carregando o portal web em `WebView`.
-2. **App do paciente**: fornecedor de dados para o `wearable-connector`, coletando métricas nativas do dispositivo e do ecossistema de saúde do sistema operacional.
+2. **App do paciente**: fornecedor de dados para a API principal, coletando métricas nativas do dispositivo e do ecossistema de saúde do sistema operacional.
 3. **App do médico**: canal móvel para acesso ao dashboard clínico, listas de pacientes, alertas e acompanhamento.
 
 Na prática, isso significa:
@@ -269,7 +271,7 @@ Na prática, isso significa:
 - autenticação do usuário e navegação principal continuam no portal web, inclusive quando carregado em `WebView`
 - permissões de saúde, consentimento do dispositivo e leitura de métricas acontecem no app do paciente
 - o app do médico consome os mesmos dados consolidados, mas não envia métricas nativas
-- o `wearable-connector` deixa de depender apenas de integrações server-to-server e passa a receber lotes/eventos originados pelo app do paciente
+- a API principal deixa de depender apenas de integrações server-to-server e passa a receber lotes/eventos originados pelo app do paciente
 - o backend continua consolidando dados clínicos e dados wearables para analytics, recomendação e inferência
 
 ## Origem dos Dados de Wearables
@@ -279,7 +281,7 @@ Após o ajuste arquitetural, a origem dos dados wearables fica dividida assim:
 - **desktop web**: permite visualizar dados e iniciar consentimentos, mas não coleta métricas nativas diretamente
 - **app do paciente**: coleta atividade, sono, frequência cardíaca, SpO2 e outras métricas disponíveis via integração nativa
 - **app do médico**: visualiza dashboards, riscos e pacientes monitorados em contexto móvel
-- **wearable-connector**: recebe, normaliza, valida e encaminha os dados coletados pelo app para armazenamento e processamento
+- **backend API**: recebe, normaliza, valida e encaminha os dados coletados pelo app para armazenamento e processamento
 - **OAuth Manager**: permanece útil para provedores que exigem consentimento/token, mas o app móvel é a borda operacional da coleta
 
 ---

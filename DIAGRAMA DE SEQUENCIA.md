@@ -495,7 +495,7 @@ O MVP local (Docker Compose) **usa uma simplificação operacional** dos fluxos 
 
 | Fluxo | Cloud (Batch + On-Demand) | MVP (Batch) |
 |-------|-------|-----|
-| **1. OAuth 2.0** | Visão alvo: pairing `/auth/pair`, Google Health REST API e orquestração cloud. | MVP atual: bridge FlutterChannel + fallback deep link + wearable-connector em memória |
+| **1. OAuth 2.0** | Visão alvo: pairing `/auth/pair`, Google Health REST API e orquestração cloud. | MVP atual: bridge FlutterChannel + fallback deep link + persistência local na API |
 | **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
 | **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
 | **Dados Públicos** | PopulationDataService On-Demand + cache 24h | Não presente |

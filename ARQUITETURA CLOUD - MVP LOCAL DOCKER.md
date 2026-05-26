@@ -9,7 +9,9 @@ Objetivo: validar fluxo funcional de medicina preventiva integrando dados clinic
 Os protótipos HTML atuais definem a experiência alvo deste MVP:
 
 - [`novoprototipoweb.html`](novoprototipoweb.html) representa o acesso desktop ao portal
-- [`novoprototipomobile.html`](novoprototipomobile.html) representa a base dos apps móveis do paciente e do médico, com dashboard em `WebView`; no caso do paciente, também há envio de dados para o `wearable-connector`
+- [`novoprototipomobile.html`](novoprototipomobile.html) representa a base dos apps móveis do paciente e do médico, com dashboard em `WebView`; no caso do paciente, também há envio de dados para a API principal
+
+> Referências a `wearable-connector`, `wearable-sync-worker` e `scheduling-service` neste documento representam o desenho inicial do MVP local. No estado atual do código, essas responsabilidades foram consolidadas na API principal.
 
 ---
 
@@ -54,12 +56,12 @@ subgraph DockerHost[Docker Local - Docker Compose]
   MobileBridge[patient-mobile-health-bridge]
   API[backend-api]
   Auth[auth-local]
-  Scheduler[scheduling-service]
+  Scheduler[scheduling na API]
   RecEngine[recommendation-engine]
   RiskEngine[risk-scoring-engine]
   MLPredict[ml-inference-service]
   Worker[data-worker-etl]
-  WearableConn[wearable-connector]
+  WearableConn[wearables na API]
   WearableSync[wearable-sync-worker]
   Postgres[(postgres)]
   MinIO[(minio data lake local)]
@@ -147,26 +149,25 @@ MLPredict --> Redis
 - Aplica regras clinicas sobre score e fatores de risco.
 - Retorna recomendacoes de exames e consultas.
 
-### 4.6 Scheduling Service
+### 4.6 Contexto de Scheduling na API
 
-- Simula integracao com agenda externa.
+- Implementado diretamente na API com persistencia real em PostgreSQL.
 - Permite criar e consultar horarios para consultas/exames.
-- Atualiza conclusão de agendamentos e resultados pós-atendimento.
+- Atualiza conclusao de agendamentos e resultados pós-atendimento sem depender de servico HTTP separado.
 
-### 4.7 Wearable Connector
+### 4.7 Ingestao Wearable na API
 
 - Gerencia a conexao de wearable do MVP com Apple Health e Google Fit.
-- Expoe endpoints REST para conectar/desconectar dispositivos e consultar dados de atividade, sono, FC e estresse.
-- Persiste estado da conexao e correlation_id no armazenamento local do serviço.
-- Valida e normaliza dados recebidos do app do paciente e de conectores locais.
-- Assume o app do paciente como um fornecedor adicional de payloads de saude no MVP.
+- Expoe endpoints REST na API para conectar/desconectar dispositivos e consultar consentimento.
+- Persiste estado da conexao, tokens OAuth e correlation_id em PostgreSQL.
+- Valida e normaliza dados recebidos do app do paciente.
+- Assume o app do paciente como fornecedor principal de payloads de saude no MVP.
 
-### 4.8 Wearable Sync Worker
+### 4.8 Sincronizacao Wearable Consolidada
 
-- Executa sincronizacao periodica (batch diario simulado por cron local).
-- Busca dados dos conectores, realiza feature engineering e grava lifecycle features no MinIO.
-- Calcula 13+ lifestyle features: avg_weekly_steps, sleep_quality_score, burnout_risk, lifestyle_compliance_score, entre outros.
-- Disponibiliza features consolidadas para o ML Inference Service.
+- A sincronizacao wearable do MVP foi consolidada na API e no app do paciente.
+- A API recebe metricas ja normalizadas, persiste dados operacionais e expoe o estado do vinculo do dispositivo.
+- O pipeline analitico continua podendo derivar lifestyle features a jusante, sem worker HTTP separado no compose atual.
 
 ### 4.9 Data Worker (ETL)
 
@@ -199,15 +200,15 @@ MLPredict --> Redis
 1. Paciente solicita conexao de dispositivo no dashboard web ou no app do paciente.
 2. No app do paciente, o dashboard roda em `WebView`, enquanto o shell nativo habilita permissoes locais.
 3. O SPA usa `FlutterChannel` quando disponivel ou fallback por deep link quando o bridge nao esta disponivel.
-4. A API repassa a solicitacao ao Wearable Connector com correlation_id.
-5. O conector registra a tentativa e devolve o resultado de conexao.
+4. A API processa a solicitacao com correlation_id e persiste o vinculo localmente.
+5. A API devolve o resultado de conexao.
 6. O dispositivo aparece como conectado no perfil do paciente.
 
 ### 5.3 Fluxo de sincronizacao de wearables
 
 1. O app do paciente coleta dados de saude do dispositivo e prepara o payload local.
 2. Wearable Sync Worker executa periodicamente (ex: a cada hora em dev) para complementar e consolidar sincronizacoes.
-3. O Wearable Connector recebe dados do app do paciente e/ou dados sinteticos locais.
+3. A API recebe dados do app do paciente e/ou dados sinteticos locais.
 4. Valida e normaliza os dados recebidos.
 5. Grava dados brutos no MinIO (camada raw).
 6. Calcula lifestyle features e grava em curated.
@@ -216,7 +217,7 @@ MLPredict --> Redis
 ### 5.4 Fluxo de agendamento
 
 1. Paciente seleciona recomendacao.
-2. API consulta Scheduling Service.
+2. API consulta o contexto de scheduling consolidado.
 3. Horarios disponiveis sao retornados.
 4. Agendamento e confirmado e salvo no Postgres.
 5. Após atendimento, a conclusão e o resultado são atualizados no serviço de agenda externo.
@@ -243,8 +244,6 @@ Exemplo de portas locais:
 - Frontend Angular: 4200
 - Backend API: 8080
 - ML Inference: 8001
-- Wearable Connector: 8002
-- Wearable Mock APIs: 8003
 - Postgres: 5432
 - MinIO API: 9000
 - MinIO Console: 9001
@@ -255,7 +254,7 @@ Exemplo de portas locais:
 
 ## 7. Estrutura Sugerida de Servicos no Docker Compose
 
-> ⚠️ **Este compose é o desenho-alvo completo.** O `docker-compose.yml` real (raiz + `modules/api/docker-compose.yml`) cobre **apenas frontend, api, db e wearable-connector**. Os demais serviços (ml-inference, scheduling, wearable-mock-apis, wearable-sync-worker, recommendation-engine, risk-scoring-engine, data-worker-etl) estão implementados no código-fonte (`modules/services/`) mas ainda não orquestrados no compose real.
+> ⚠️ **Este compose é o desenho-alvo completo.** O `docker-compose.yml` real (raiz + `modules/api/docker-compose.yml`) cobre **frontend, api e db**, e o fluxo wearable/scheduling do MVP ja esta consolidado na API. Os demais serviços analíticos seguem como desenho alvo ou implementação isolada no código-fonte.
 
 ```yaml
 services:
@@ -267,36 +266,14 @@ services:
   backend-api:
     build: ./modules/api
     ports: ["8080:8080"]
-    depends_on: [postgres, wearable-connector]
+    depends_on: [postgres]
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
-      - WEARABLE_CONNECTOR_URL=http://wearable-connector:8002
 
   ml-inference-service:
     build: ./modules/ml/smart-triage-health
     ports: ["8001:8001"]
     depends_on: [postgres]
-
-  wearable-connector:
-    build: ./modules/services/wearable-connector
-    ports: ["8002:8002"]
-    depends_on: [postgres]
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
-      - WEARABLE_MOCK_URL=http://wearable-mock-apis:8003
-      - OAUTH_MOCK_MODE=true
-
-  wearable-mock-apis:
-    build: ./modules/services/wearable-mock-apis
-    ports: ["8003:8003"]
-
-  wearable-sync-worker:
-    build: ./modules/services/wearable-sync-worker
-    depends_on: [wearable-connector, postgres]
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/care_plus
-      - WEARABLE_CONNECTOR_URL=http://wearable-connector:8002
-      - SYNC_INTERVAL_SECONDS=3600
 
   recommendation-engine:
     build: ./modules/services/recommendation-engine
@@ -305,10 +282,6 @@ services:
   risk-scoring-engine:
     build: ./modules/services/risk-scoring-engine
     depends_on: [ml-inference-service]
-
-  scheduling-service:
-    build: ./modules/services/scheduling-service
-    depends_on: [postgres]
 
   data-worker-etl:
     build: ./modules/services/data-worker-etl
@@ -481,7 +454,7 @@ Azure API Management    →         (integrado na API)
 Backend API             →         backend-api
 Azure SQL Database      →         postgres (container)
 Azure Data Lake         →         minio (container)
-Wearable Connector      →         wearable-connector
+Wearable Ingestion      →         backend-api
 Wearable Sync Worker    →         wearable-sync-worker
 Databricks/Synapse      →         data-worker-etl
 Lifestyle Features      →         Cálculo no sync-worker
@@ -490,7 +463,7 @@ Azure ML Training       →         Offline (script Python)
 Azure ML Inference      →         ml-inference-service
 Risk Engine             →         risk-scoring-engine
 Recommendation Engine   →         recommendation-engine
-Scheduler               →         scheduling-service
+Scheduling Context      →         backend-api
 Azure Monitor           →         Docker logs + healthcheck
 ```
 
