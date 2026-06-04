@@ -36,4 +36,4 @@ services:
       ETL_SOURCES: sinan,sinasc,sim,sih,sia,cnes,ibge
       ETL_INTERVAL_SECONDS: "86400"
       ETL_ENABLE_LOOP: "false"
-    restart: unless-stopped
+    restart: on-failure
