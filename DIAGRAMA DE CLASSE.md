@@ -1,8 +1,8 @@
 # 🏥 Diagrama de Classes — CarePredict (Modelo Conceitual + Roadmap)
 
-Este diagrama representa o modelo conceitual do sistema **CarePredict**, incluindo componentes do MVP atual e extensões de roadmap.
+Este diagrama representa o modelo conceitual do sistema **CarePredict**, com foco no que está ativo no MVP atual e marcações de expansão de roadmap.
 
-> No código atual, o suporte efetivo a wearables está concentrado em Apple Health e Google Fit. As demais plataformas do diagrama representam expansão planejada do domínio.
+> No código atual, o suporte efetivo a wearables está concentrado em Apple Health e Google Fit. Garmin e Oura permanecem como roadmap e não devem ser lidos como implementação atual.
 
 - domínio clínico do paciente
 - **dados contínuos de dispositivos wearables** (novo!)
@@ -10,6 +10,13 @@ Este diagrama representa o modelo conceitual do sistema **CarePredict**, incluin
 - componentes de inteligência artificial
 - recomendações preventivas
 - rastreabilidade dos modelos de Machine Learning
+
+## Estado implementado no MVP local
+
+- Fluxo wearable ativo: conexão de dispositivo + sincronização via API.
+- Plataformas ativas: Apple Health e Google Fit.
+- Persistência operacional: PostgreSQL para contexto transacional de usuários/pacientes/recomendações/agendamento e dados de saúde sincronizados.
+- Estruturas de roadmap (ex.: plataformas extras e parte do pipeline avançado de features) permanecem no diagrama como visão de evolução.
 
 ---
 
@@ -106,8 +113,6 @@ class WearablePlataforma {
   <<enumeration>>
   AppleHealth
   GoogleFit
-  Garmin
-  Oura
 }
 
 class WearableDevice {
@@ -863,6 +868,8 @@ As seguintes classes/componentes estão **incluídas intencionalmente** para ali
 - `RiskScore` — camada intermediária de score entre risco granular e score agregado
 - `ClinicalGuideline` — base estruturada de protocolos clínicos
 - `WearableSync` — orquestração de sincronização e auditoria de wearables
+
+Observação: estas classes de infraestrutura servem como referência de desenho e evolução. Não significam que toda a topologia cloud associada esteja ativa no MVP local atual.
 
 Os serviços operacionais de infraestrutura permanecem fora do escopo do diagrama de classe:
 - `AnonymizationService`

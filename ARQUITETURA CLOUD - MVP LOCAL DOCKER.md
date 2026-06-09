@@ -1,8 +1,8 @@
 # Arquitetura Cloud - MVP Local com Docker (CarePredict)
 
-Este documento define a arquitetura alvo do MVP do CarePredict executando localmente com Docker.
+Este documento define a arquitetura operacional do MVP do CarePredict executando localmente com Docker.
 
-> O diagrama abaixo representa a direção do MVP local. Nem todos os serviços listados estão ativos ao mesmo tempo no compose real.
+> O diagrama abaixo representa o estado atual implementado no repositório para o MVP local.
 
 Objetivo: validar fluxo funcional de medicina preventiva integrando dados clinicos e dados continuos de dispositivos wearables (ingestao -> processamento -> inferencia -> recomendacao -> agendamento) sem dependencia inicial de cloud publica.
 
@@ -11,7 +11,7 @@ Os protótipos HTML atuais definem a experiência alvo deste MVP:
 - [`novoprototipoweb.html`](novoprototipoweb.html) representa o acesso desktop ao portal
 - [`novoprototipomobile.html`](novoprototipomobile.html) representa a base dos apps móveis do paciente e do médico, com dashboard em `WebView`; no caso do paciente, também há envio de dados para a API principal
 
-> Referências a `wearable-connector`, `wearable-sync-worker` e `scheduling-service` neste documento representam o desenho inicial do MVP local. No estado atual do código, essas responsabilidades foram consolidadas na API principal.
+> Referências históricas a `wearable-connector`, `wearable-sync-worker` e `scheduling-service` foram substituídas no MVP atual por fluxos consolidados na API principal e no app conector.
 
 ---
 
@@ -47,7 +47,6 @@ PacienteDesktop[Paciente - Portal Web]
 PacienteMobile[Paciente - App Mobile]
 MedicoDesktop[Medico - Dashboard Web]
 MedicoMobile[Medico - App Mobile]
-WearableMock[Wearable Mock APIs]
 
 subgraph DockerHost[Docker Local - Docker Compose]
   Frontend[frontend-angular]
@@ -55,17 +54,12 @@ subgraph DockerHost[Docker Local - Docker Compose]
   DoctorMobileShell[doctor-mobile-app-shell]
   MobileBridge[patient-mobile-health-bridge]
   API[backend-api]
-  Auth[auth-local]
   Scheduler[scheduling na API]
-  RecEngine[recommendation-engine]
-  RiskEngine[risk-scoring-engine]
-  MLPredict[ml-inference-service]
+  HealthSync[sync de saúde na API]
   Worker[data-worker-etl]
-  WearableConn[wearables na API]
-  WearableSync[wearable-sync-worker]
+  PublicIngestion[public-health-ingestion-service]
   Postgres[(postgres)]
   MinIO[(minio data lake local)]
-  Redis[(redis)]
   PgAdmin[pgadmin opcional]
 end
 
@@ -76,35 +70,18 @@ PatientMobileShell --> MobileBridge
 MedicoDesktop --> Frontend
 MedicoMobile --> DoctorMobileShell
 DoctorMobileShell --> Frontend
-WearableMock --> WearableConn
-MobileBridge --> WearableConn
+MobileBridge --> HealthSync
 
 Frontend --> API
-API --> Auth
 API --> Scheduler
-API --> RecEngine
-RecEngine --> RiskEngine
-RiskEngine --> MLPredict
-
-API --> WearableConn
-WearableConn --> Postgres
-WearableConn --> Redis
-
-WearableSync --> WearableConn
-WearableSync --> MinIO
-WearableSync --> Postgres
+API --> HealthSync
+HealthSync --> Postgres
 
 API --> Postgres
 Worker --> MinIO
 Worker --> Postgres
-Worker --> MLPredict
-
+PublicIngestion --> MinIO
 Scheduler --> Postgres
-RecEngine --> Postgres
-MLPredict --> MinIO
-
-API --> Redis
-MLPredict --> Redis
 ```
 
 ---
@@ -135,19 +112,19 @@ MLPredict --> Redis
 
 ### 4.3 Servico de Inferencia ML
 
-- Recebe features e retorna probabilidades de risco.
-- Inicialmente com modelo versionado em arquivo local.
-- Interface HTTP simples para integracao rapida.
+- O pipeline de treino e artefatos existe no modulo `ml/smart-triage-health`.
+- No MVP atual, a inferencia em runtime ainda nao esta integrada ponta a ponta como servico ativo no compose principal.
+- O risco operacional do produto permanece suportado por regras e componentes da API/servicos atuais.
 
 ### 4.4 Risk Scoring Engine
 
-- Traduz probabilidades em score de risco por paciente.
-- Consolida sinais clinicos e gera Health Score.
+- Existe como servico isolado no repositório para evolucao incremental.
+- No MVP operacional atual, nao compoe o fluxo principal do compose raiz.
 
 ### 4.5 Recommendation Engine
 
-- Aplica regras clinicas sobre score e fatores de risco.
-- Retorna recomendacoes de exames e consultas.
+- Existe como servico isolado no repositório para evolucao incremental.
+- No MVP operacional atual, recomendacoes tambem sao atendidas por contexto consolidado na API.
 
 ### 4.6 Contexto de Scheduling na API
 
@@ -167,7 +144,7 @@ MLPredict --> Redis
 
 - A sincronizacao wearable do MVP foi consolidada na API e no app do paciente.
 - A API recebe metricas ja normalizadas, persiste dados operacionais e expoe o estado do vinculo do dispositivo.
-- O pipeline analitico continua podendo derivar lifestyle features a jusante, sem worker HTTP separado no compose atual.
+- O pipeline analitico continua podendo derivar agregacoes a jusante, sem worker HTTP separado no compose atual.
 
 ### 4.9 Data Worker (ETL)
 
@@ -179,7 +156,7 @@ MLPredict --> Redis
 
 - Postgres: dados transacionais (pacientes, consultas, recomendacoes, dispositivos wearables, tokens OAuth).
 - MinIO: data lake local (raw, processed, curated — incluindo dados brutos de wearables e lifestyle features).
-- Redis: cache de tokens OAuth, filas leves de sync e cache de features recentes.
+- Cache operacional: em memoria no processo quando necessario, sem dependencia obrigatoria de Redis no MVP atual.
 
 ---
 
@@ -189,11 +166,10 @@ MLPredict --> Redis
 
 1. Frontend solicita analise preventiva para paciente.
 2. API consulta historico clinico no Postgres.
-3. API busca lifestyle features do paciente (geradas pelo Wearable Sync Worker).
-4. API combina features clinicas + lifestyle features e envia para ML Inference Service.
-5. Risk Scoring Engine calcula score consolidado (clinico + comportamental).
-6. Recommendation Engine gera recomendacoes contextualizadas com padrao de estilo de vida.
-7. API persiste resultado e responde ao frontend (incluindo graficos de atividade, sono, FC, estresse).
+3. API busca historico de metricas e agregacoes salvas no proprio backend.
+4. API combina sinais clinicos e comportamentais disponiveis no contexto atual.
+5. Regras de risco e recomendacao ativas no MVP calculam prioridade e orientacoes.
+6. API persiste resultado e responde ao frontend (incluindo graficos de atividade, sono e FC).
 
 ### 5.2 Fluxo OAuth / Conexao de Wearable (MVP)
 
@@ -207,12 +183,12 @@ MLPredict --> Redis
 ### 5.3 Fluxo de sincronizacao de wearables
 
 1. O app do paciente coleta dados de saude do dispositivo e prepara o payload local.
-2. Wearable Sync Worker executa periodicamente (ex: a cada hora em dev) para complementar e consolidar sincronizacoes.
+2. O app envia os dados para a API via endpoint de sincronizacao (`POST /health/sync`).
 3. A API recebe dados do app do paciente e/ou dados sinteticos locais.
 4. Valida e normaliza os dados recebidos.
-5. Grava dados brutos no MinIO (camada raw).
-6. Calcula lifestyle features e grava em curated.
-7. Atualiza agregacoes locais para uso pelo ML Inference Service.
+5. Persiste metricas, sessoes de sono e sumarios diarios no PostgreSQL.
+6. Expõe consultas de latest/trends/daily-summary para o frontend.
+7. O pipeline analitico pode exportar agregados para camadas raw/processed/curated no MinIO.
 
 ### 5.4 Fluxo de agendamento
 
@@ -248,7 +224,6 @@ Exemplo de portas locais:
 - MinIO API: 9000
 - MinIO Console: 9001
 - PgAdmin (opcional): 5050
-- Redis: 6379
 
 ---
 
@@ -340,9 +315,7 @@ Se quiser adicionar anonimização como teste:
 anonymization-service:
   build: ./modules/services/anonymization
   ports: ["8010:8010"]
-  depends_on: [redis]
   environment:
-    - REDIS_URL=redis://redis:6379
     - ENABLE_MASKING=true
     - CIPHER_KEY=${CIPHER_KEY}
 ```
@@ -361,7 +334,7 @@ Mas isso é **opcional** e **não obrigatório** para o MVP funcionar.
 - Controle de acesso por perfil na aplicacao (paciente, medico, admin).
 - Logs sem dados pessoais identificaveis.
 - Fluxo de consentimento LGPD simulado: paciente deve autorizar explicitamente conexao de cada dispositivo wearable.
-- Tokens OAuth armazenados com TTL no Redis (simulando rotacao automatica).
+- Tokens OAuth persistidos em tabelas de wearable no PostgreSQL durante o MVP local.
 - Dados de wearables em bucket separado no MinIO (isolamento logico equivalente ao PHI Zone).
 
 ---
@@ -418,7 +391,7 @@ Este MVP **segue intencionalmente uma arquitetura simplificada** da Cloud, com a
 |--------|-------|-----|
 | Banco Transacional | Azure SQL Database | PostgreSQL (container) |
 | Data Lake | Azure Data Lake Storage Gen2 | MinIO (bucket local) |
-| Cache | Azure Cache for Redis | Redis (container) |
+| Cache | Azure Cache for Redis | Cache em memória / sem Redis obrigatório |
 | Schema | Idêntico | Idêntico (facilita migração) |
 
 ✅ **Decisão**: PostgreSQL no MVP permite prototipagem rápida. Schema é idêntico ao Azure SQL, facilitando transição.
@@ -427,7 +400,7 @@ Este MVP **segue intencionalmente uma arquitetura simplificada** da Cloud, com a
 
 | Aspecto | Cloud | MVP |
 |--------|-------|-----|
-| Feature Engineering | Azure Databricks | Wearable Sync Worker (Python) |
+| Feature Engineering | Azure Databricks | API + ETL local (Python) |
 | Anonimização | Data Anonymization Service | Ausente (dados não sensíveis) |
 | Dados Públicos | PopulationDataService (On-Demand + cache 24h) | Ausente (não no escopo MVP) |
 | Modo de Sync | Batch Only (cron diário) | Batch apenas (cron diário) |
@@ -455,9 +428,9 @@ Backend API             →         backend-api
 Azure SQL Database      →         postgres (container)
 Azure Data Lake         →         minio (container)
 Wearable Ingestion      →         backend-api
-Wearable Sync Worker    →         wearable-sync-worker
+Wearable Sync Worker    →         sync consolidado na API
 Databricks/Synapse      →         data-worker-etl
-Lifestyle Features      →         Cálculo no sync-worker
+Lifestyle Features      →         Cálculo na API + ETL local
 Feature Store           →         Camada curated no MinIO
 Azure ML Training       →         Offline (script Python)
 Azure ML Inference      →         ml-inference-service

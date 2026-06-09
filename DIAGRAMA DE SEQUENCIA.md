@@ -14,97 +14,72 @@ Este documento descreve os principais fluxos de interação do sistema **CarePre
 
 ---
 
-# 1️⃣ Conexão com Dispositivo Wearable (OAuth 2.0)
+# 1️⃣ Conexão com Dispositivo Wearable (MVP implementado)
 
-Fluxo de autenticação e autorização para conectar um dispositivo wearable ao sistema. No MVP atual, o caminho principal passa pelo app conector/bridge e pelo fallback web, não por um OAuth mock isolado.
+Fluxo operacional atual do MVP: pareamento via `wearable-connect`, permissões nativas via bridge quando disponível e fallback por deep link no navegador.
 
 ```mermaid
 sequenceDiagram
 
 participant Paciente
-participant Frontend
+participant SPA as SPA wearable-connect
+participant Connector as App Conector (WebView)
 participant API
+participant Native as FlutterChannel / Permissões Nativas
 participant PlatformaWearable as Plataforma Wearable<br/>(Apple/Google)
-participant KeyVault
-participant WearableDB
+participant WearableDB as PostgreSQL
 
-Paciente->>Frontend: Clica em "Conectar Dispositivo"
-Frontend->>Frontend: Mostra opções de plataforma
-Paciente->>Frontend: Seleciona plataforma (ex: Apple Health)
+Paciente->>SPA: Clica em "Conectar Dispositivo"
+SPA->>SPA: Seleciona plataforma e escopos
+Paciente->>SPA: Confirma conexão
 
-Frontend->>API: Inicia OAuth flow para Apple Health
-API->>API: Gera estado aleatório (CSRF protection)
+SPA->>Connector: Solicita permissões nativas (quando em WebView)
+Connector->>Native: request_native_permissions(correlation_id)
+Native-->>SPA: resultado da permissão + correlation_id
 
-API-->>Frontend: Retorna URL de autenticação
+alt Bridge indisponível
+    SPA->>SPA: fallback deep link careplus://pair
+end
 
-Frontend->>PlatformaWearable: Redireciona para tela de login Apple
+SPA->>API: POST /wearables/connect (platform, scopes, correlation_id)
+API->>API: Resolve paciente autenticado
+API->>WearableDB: Upsert vínculo/token pendente
+API-->>SPA: device + header X-Correlation-Id
+
+SPA->>PlatformaWearable: Inicia autorização OAuth (quando aplicável)
 PlatformaWearable->>Paciente: Solicita login + consentimento
-
 Paciente->>PlatformaWearable: Autoriza acesso aos dados
-PlatformaWearable->>PlatformaWearable: Valida consentimento
-
-PlatformaWearable-->>Frontend: Redireciona com auth code
-
-Frontend->>API: Envia authorization code + estado
-
-API->>API: Valida estado (segurança)
-API->>PlatformaWearable: Troca authorization code por access token
-
-PlatformaWearable-->>API: Retorna access_token e refresh_token
-
-API->>KeyVault: Armazena tokens de forma segura
-KeyVault-->>API: Confirmação
-
-API->>WearableDB: Registra dispositivo conectado
-
-WearableDB-->>API: Dispositivo registrado
-
-API-->>Frontend: Conexão bem sucedida
-Frontend-->>Paciente: ✅ Dispositivo conectado com sucesso!
+PlatformaWearable-->>SPA: callback OAuth
+SPA->>API: POST /wearables/oauth/callback
+API->>WearableDB: Atualiza token e estado do dispositivo
+API-->>SPA: Conexão finalizada
+SPA-->>Paciente: ✅ Dispositivo conectado com sucesso
 ```
 
 ---
 
-# 2️⃣ Sincronização de Dados Wearables
+# 2️⃣ Sincronização de Dados Wearables (MVP implementado)
 
-Fluxo de coleta e sincronização **batch diária** de dados do dispositivo wearable (OPÇÃO A — Batch Only).
+Fluxo operacional atual do MVP: app do paciente coleta dados e envia para a API via endpoint de sincronização.
 
 ```mermaid
 sequenceDiagram
 
-participant PlatformaWearable as Plataforma Wearable<br/>API
-participant DataConnector as Wearable<br/>Data Connector
-participant KeyVault
-participant AnonymizationService
-participant WearableDB
-participant DataLake
+participant Paciente
+participant Connector as App Conector
+participant PlatformaWearable as APIs Apple/Google
+participant API
+participant WearableDB as PostgreSQL
 
-loop Sincronização Diária (Batch) — Uma vez ao dia
-    DataConnector->>KeyVault: Recuperar access token
-    KeyVault-->>DataConnector: Token
-    
-    DataConnector->>PlatformaWearable: Solicita dados dos últimos 24h
-    PlatformaWearable->>PlatformaWearable: Agrega dados do dispositivo
-    PlatformaWearable-->>DataConnector: Retorna atividade, sono, frequência cardíaca, estresse
-    
-    DataConnector->>DataConnector: Valida integridade dos dados
-    DataConnector->>DataConnector: Normaliza unidades (milhas → km, etc)
-    DataConnector->>DataConnector: Detecção de anomalias
-    
-    DataConnector->>AnonymizationService: Enviar lote de dados para processamento batch
-    
-    AnonymizationService->>AnonymizationService: Remove identificadores diretos
-    AnonymizationService->>AnonymizationService: Aplica pseudonimização
-    AnonymizationService->>AnonymizationService: Data masking conforme regras LGPD
-    
-    AnonymizationService->>WearableDB: Armazena dados anonimizados
-    WearableDB-->>AnonymizationService: Confirmação
-    
-    AnonymizationService->>DataLake: Armazena dados processados (zona Raw/Processed)
-    DataLake-->>AnonymizationService: Confirmação
-    
-    AnonymizationService-->>DataConnector: Batch processado com sucesso
-    DataConnector->>DataConnector: Atualiza last_sync timestamp
+loop Sincronização (foreground/background)
+    Paciente->>Connector: Autoriza leitura de métricas
+    Connector->>PlatformaWearable: Coleta dados (passos, sono, FC, SpO2)
+    PlatformaWearable-->>Connector: Payload bruto de saúde
+    Connector->>Connector: Normaliza formato para contrato da API
+    Connector->>API: POST /health/sync
+    API->>API: Valida payload e resolve paciente
+    API->>WearableDB: Persiste métricas, sono e sumário diário
+    API-->>Connector: status, metrics_saved, sleep_saved
 end
 ```
 
@@ -496,7 +471,7 @@ O MVP local (Docker Compose) **usa uma simplificação operacional** dos fluxos 
 | Fluxo | Cloud (Batch + On-Demand) | MVP (Batch) |
 |-------|-------|-----|
 | **1. OAuth 2.0** | Visão alvo: pairing `/auth/pair`, Google Health REST API e orquestração cloud. | MVP atual: bridge FlutterChannel + fallback deep link + persistência local na API |
-| **2. Sincronização** | Batch diário (cron) | Batch diário (cron) |
+| **2. Sincronização** | Batch diário (cron) | foreground/background sync via app + API (`/health/sync`) |
 | **Anonimização** | Separada (AnonymizationService) | Intencionalmente ausente (dados sintéticos) |
 | **Dados Públicos** | PopulationDataService On-Demand + cache 24h | Não presente |
 | **KeyVault** | Azure Key Vault | Arquivo .env |
@@ -507,22 +482,18 @@ O MVP local (Docker Compose) **usa uma simplificação operacional** dos fluxos 
 No MVP, o fluxo é mais simples:
 
 ```
-Wearable Sync Worker (cron diário)
+App do paciente (foreground/background)
     ↓
-[Consulta estado local de conexão/sincronização]
+[Coleta métricas via Apple/Google]
     ↓
-[Wearable Connector local em memória]
+[Envia payload para POST /health/sync]
     ↓
-[Retorna dados sintéticos ou mockados]
+[API valida e persiste no PostgreSQL]
     ↓
-[Valida e normaliza]
-    ↓
-[Escreve em MinIO: raw, processed, curated]
-    ↓
-[Atualiza agregações locais / artefatos de análise]
+[ETL local exporta agregados para MinIO quando aplicável]
 ```
 
-**Sem EventHub, sem AnonymizationService, sem streaming e sem Feature Store versionada no MVP local.**
+**Sem EventHub, sem AnonymizationService e sem Feature Store versionada no MVP local.**
 
 ### 3A-5A. Análise Preventiva no MVP
 

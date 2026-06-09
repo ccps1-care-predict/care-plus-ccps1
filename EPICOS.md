@@ -19,7 +19,7 @@ Done
 - Arquitetura base aplicada:
   - `api`: modular monolith com contextos `users`, `patients`, `recommendations` e `scheduling` registrados.
   - `services` e `ml`: servicos HTTP com `presentation/application/domain/infrastructure`.
-  - `data` e `wearable-sync-worker`: pipeline em estagios.
+  - `data`: pipeline em estagios.
   - `spa`: organizacao por feature (`dashboard`, `risk`, `recommendations`, `wearables`, `scheduling`).
 - Backend funcional ainda parcial: varios componentes continuam com stubs/in-memory para persistencia e inferencia.
 - Contextos `users`, `patients`, `recommendations` e `scheduling` com modulo e suite funcional dedicados no backend.
@@ -169,10 +169,10 @@ Objetivo: sair de baseline arquitetural para fluxo funcional real no backend.
 
 ### Card: Expandir API alem de usuarios
 Story Points: **8**
-Status: **Done**
+Status: **In Progress**
 
 Checklist:
-- [x] Contexto `users` com persistencia em Postgres + cache Redis
+- [x] Contexto `users` com persistencia em Postgres
 - [x] IDs de `users` migrados de `int` para `UUID` em todas as camadas
 - [x] Migration `0002_users_id_uuid` aplicada e validada no ambiente Docker
 - [x] Suite funcional `tests/functional/users` com 17 cenarios implementada e passando
@@ -183,7 +183,7 @@ Checklist:
 
 ### Card: Integracao connector-app + adapters wearables
 Story Points: **13**
-Status: **Done**
+Status: **In Progress**
 
 Checklist:
 - [x] Endpoints de pairing (`POST /auth/pair`, `POST /auth/pair/validate`)
@@ -197,7 +197,7 @@ Checklist:
 
 ### Card: Persistencia real nos servicos
 Story Points: **8**
-Status: **Done**
+Status: **In Progress**
 
 Checklist:
 - [x] `wearable-connector`, `wearable-sync-worker` e `clinical-guidelines-validator` — removidos (funcoes consolidadas na API)
@@ -301,6 +301,6 @@ Checklist:
 
 ## Totais (visao atual)
 
-- Done: **102 SP**
-- In progress: **0 SP**
+- Done: **73 SP**
+- In progress: **29 SP**
 - Backlog mapeado: **34 SP**

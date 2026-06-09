@@ -2,7 +2,7 @@
 
 Sistema de medicina preventiva baseado em dados clínicos, epidemiológicos e comportamentais proposto para a **CarePlus**.
 
-> O documento abaixo mistura casos de uso entregues no MVP com expansão futura. As plataformas de wearables efetivamente expostas hoje são Apple Health e Google Fit; Garmin e Oura permanecem como roadmap.
+> O documento abaixo mistura casos de uso entregues no MVP com expansão futura. No estado atual, o fluxo wearable operacional é `wearable-connect` no SPA + bridge do app conector + API (`/wearables/*` e `/health/sync`).
 
 O CarePredict utiliza:
 
@@ -12,6 +12,14 @@ O CarePredict utiliza:
 - modelos de Machine Learning
 
 para prever riscos de saúde e recomendar exames preventivos com **visão 360° do estilo de vida**.
+
+## Estado implementado no MVP local
+
+- Conexão de wearable via fluxo `wearable-connect` no SPA.
+- Integração mobile via app conector com bridge `FlutterChannel` e fallback por deep link.
+- Sincronização de dados de saúde via API (`/health/sync`).
+- Plataformas efetivamente operacionais no MVP: Apple Health e Google Fit.
+- Integrações com novas plataformas (Garmin/Oura) permanecem como roadmap.
 
 ---
 
@@ -86,7 +94,6 @@ Dispositivos inteligentes e suas APIs que fornecem dados contínuos de estilo de
 
 - **Apple HealthKit** — Apple Watch, iPhone
 - **Google Fit** — Android Wear, Smartphones
-- **Apple Health** — Dispositivos Apple
 - **Garmin Connect** — Relógios Garmin *(roadmap)*
 - **Oura Ring** — Anéis inteligentes *(roadmap)*
 
@@ -110,7 +117,7 @@ Medico((Médico))
 Admin((Administrador))
 Agenda((Sistema de Agenda))
 DadosPublicos((Dados Públicos de Saúde))
-Wearables((Plataformas<br/>Wearables))
+Wearables((Plataformas Wearables<br/>Apple/Google no MVP))
 
 %% SISTEMA
 
@@ -235,26 +242,22 @@ Consulta é realizada com dados comportamentais como contexto
 
 ---
 
-# 📱 Fluxo de Integração com Wearables (Novo!)
+# 📱 Fluxo de Integração com Wearables (MVP atual)
 
 ```
-Paciente autoriza acesso a dispositivo via OAuth
+Paciente inicia conexão em wearable-connect
         ↓
-CarePredict conecta com plataforma (Apple Health, Google Fit)
+SPA solicita permissões no app conector (FlutterChannel) ou deep link fallback
         ↓
-Sistema sincroniza dados históricos (últimas 4 semanas)
+App conector coleta métricas em Apple Health / Google Fit
         ↓
-Dados são anonimizados e processados
+API recebe sincronização por `/health/sync`
         ↓
-Features de estilo de vida são extraídas
+Backend valida e persiste métricas/sumários
         ↓
-Modelos ML são enriquecidos com dados comportamentais
+Dashboards e recomendações usam os dados atualizados
         ↓
-Dashboard do paciente exibe gráficos de atividade, sono, FC, estresse
-        ↓
-Sincronização contínua (diária ou em tempo real)
-        ↓
-Recomendações são adaptadas ao estilo de vida real do paciente
+Sincronização contínua ocorre em foreground/background no app do paciente
 ```
 
 ---

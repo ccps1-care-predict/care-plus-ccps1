@@ -6,6 +6,17 @@ Para a versão local com Docker, ver `ARQUITETURA CLOUD - MVP LOCAL DOCKER.md`.
 
 > O conteúdo abaixo representa a visão de longo prazo. O MVP local atual opera com uma pilha menor e não implementa todo o fluxo de Data Lake, Feature Store e MLOps descrito aqui.
 
+## Estado operacional no MVP local (implementado hoje)
+
+Para evitar ambiguidade entre desenho alvo e implementação atual:
+
+- Conexão wearable: fluxo `wearable-connect` no SPA com bridge `FlutterChannel` e fallback `careplus://pair`.
+- Ingestão de métricas: app do paciente envia payload para a API (`POST /health/sync`).
+- Persistência operacional: PostgreSQL para métricas, sono, sumários e vínculos de wearable.
+- Pipeline analítico local: `public-health-ingestion-service` + `data-worker-etl` com MinIO/Postgres.
+- Não há `Data Anonymization Service`, `EventHub` ou `PopulationDataService` ativos no MVP local.
+- O conteúdo abaixo permanece como referência de arquitetura cloud de longo prazo.
+
 A arquitetura integra:
 
 - dados clínicos individuais
@@ -333,7 +344,7 @@ Sincronização uma vez ao dia (cron configurável) de dados wearables:
 Dados epidemiológicos governamentais são buscados durante a análise preventiva,
 com cache por 24h para minimizar latência e reduzir chamadas externas.
 
-**Fluxo de Wearables (OPÇÃO A)**:
+**Fluxo de Wearables (OPÇÃO A - cloud target)**:
 
 ```
 Plataforma Wearable (Apple Health, Google Fit)
@@ -351,7 +362,7 @@ Detecção de anomalias
 Envia lote para AnonymizationService (processamento batch)
 ```
 
-**Sem EventHub**: Dados wearables não utilizam Azure Event Hub. Fluxo direto batch para anonimização.
+**No MVP local**: sem EventHub e sem serviço dedicado de anonimização. O fluxo operacional é app do paciente → API (`/health/sync`) → PostgreSQL, com derivação analítica local a jusante.
 
 ---
 
@@ -1042,7 +1053,7 @@ A Cloud possui um **Data Anonymization Service** como componente separado:
 
 Os dados públicos (DATASUS, IBGE, ANS) são integrados via:
 - **PopulationDataService**: consulta On-Demand durante a análise preventiva
-- **Cache 24h**: Redis/Memory para reduzir latência e custo de chamadas
+- **Cache 24h**: camada de cache na API (memória/processo) para reduzir latência e custo de chamadas
 - **Uso**: Enriquecimento demográfico contextual (idade/gênero/região)
 - **Não presente no MVP**: Escopo reduzido
 

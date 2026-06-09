@@ -93,20 +93,14 @@ subgraph AuthLayer["Camada de Autenticação"]
 end
 
 subgraph IngestLayer["Camada de Ingestão"]
-    WearableConnector["Wearable Connector"]
-    MobileGateway["Mobile Health Gateway"]
-    EventHub["Azure Event Hub<br/>(Streaming)"]
-    Queue["Service Bus Queue<br/>(Async Processing)"]
+  MobileGateway["App Conector (coleta nativa)"]
+  ApiWearables["API /wearables/*"]
+  ApiHealthSync["API /health/sync"]
 end
 
-subgraph AnonymizationLayer["Camada de Anonimização"]
-    DataMasking["Data Masking Service"]
-    LGPD["LGPD Compliance Check"]
-end
-
-subgraph StorageLayer["Data Lake"]
-    PHI["PHI Zone<br/>(Dados Raw)"]
-    Raw["Raw Zone<br/>(Dados Anonimizados)"]
+subgraph StorageLayer["Persistência MVP"]
+  Postgres["PostgreSQL (operacional)"]
+  MinIO["MinIO (camadas analíticas)"]
 end
 
 subgraph ProcessingLayer["Processamento"]
@@ -149,19 +143,16 @@ AppleWatch --> NativeHealth
 AndroidWear --> NativeHealth
 
 NativeHealth --> MobileGateway
-MobileGateway --> WearableConnector
+MobileGateway --> ApiWearables
+MobileGateway --> ApiHealthSync
 
 AppleAuth --> MobileGateway
 GoogleAuth --> MobileGateway
 
-WearableConnector --> EventHub
-EventHub --> Queue
-Queue --> DataMasking
-DataMasking --> LGPD
-LGPD --> PHI
-PHI --> Raw
-
-Raw --> Normalization
+ApiWearables --> Postgres
+ApiHealthSync --> Postgres
+Postgres --> Normalization
+MinIO --> Normalization
 Normalization --> Validation
 Validation --> Enrichment
 Enrichment --> LifestyleFeatures
@@ -233,7 +224,7 @@ Médico → App Mobile do Médico → WebView do dashboard clínico
 - Resumo de exercícios
 - Alertas de anomalias quando houver suporte do app/provedor
 
-### 3️⃣ Ingestão e Anonimização
+### 3️⃣ Ingestão e Persistência (MVP)
 
 ```python
 # Pseudocódigo
@@ -241,9 +232,9 @@ Médico → App Mobile do Médico → WebView do dashboard clínico
 2. patient_mobile_app.normalize_and_sign_payload()
 3. backend_api.receive_mobile_sync(payload)
 4. validate_data_integrity()
-5. anonymize_pii(data)
-6. store_in_data_lake(raw_zone)
-7. emit_event_to_processing_pipeline()
+5. persist_postgres_operational_tables()
+6. update_daily_summary_and_health_views()
+7. export_to_analytical_layers_when_needed()
 ```
 
 ### 4️⃣ Processamento e Feature Engineering
@@ -560,6 +551,8 @@ burnout_risk = 1 if stress_avg > 70 and sleep_quality < 50 else 0
 
 ## Segurança e Conformidade
 
+> Esta seção descreve principalmente práticas alvo para ambiente cloud/produção. No MVP local, o foco está em consentimento, segregação lógica e uso de dados sintéticos para validação funcional.
+
 ### LGPD - Lei Geral de Proteção de Dados
 
 ✅ **Consentimento Explícito**
@@ -582,7 +575,7 @@ burnout_risk = 1 if stress_avg > 70 and sleep_quality < 50 else 0
 - Conformidade com direito de retratação
 - Log de exclusão para auditoria
 
-### Segurança de Credenciais
+### Segurança de Credenciais (target cloud)
 
 ```python
 # Armazenamento seguro em Azure Key Vault
@@ -607,15 +600,24 @@ class WearableAuthManager:
 
 ---
 
-## Implementação por Fase
+## Roadmap por Fase
+
+Status atual do MVP local:
+
+- Fluxo wearable ativo via SPA `wearable-connect` + app conector.
+- Permissões nativas via `FlutterChannel` com fallback por deep link.
+- Conexão/sincronização operacional via API (`/wearables/*`, `/health/sync`).
+- Persistência operacional no backend já disponível.
+
+As fases abaixo representam evolução planejada após o núcleo MVP.
 
 ### Fase 1 - MVP (3 semanas)
 
-- [ ] Estrutura de dados (tabelas)
-- [ ] Integração OAuth com Apple Health e Google Fit
-- [ ] APIs de conexão e sincronização
-- [ ] Processamento básico (normalização e armazenamento)
-- [ ] 5 features de estilo de vida
+- [x] Estrutura de dados (tabelas)
+- [x] Integração OAuth com Apple Health e Google Fit
+- [x] APIs de conexão e sincronização
+- [x] Processamento básico (normalização e armazenamento)
+- [ ] Evoluir conjunto inicial de features de estilo de vida para cobertura completa
 
 ### Fase 2 - Expansão (2-3 semanas)
 
@@ -650,12 +652,10 @@ azure-keyvault-secrets    # Azure Key Vault
 
 ## Próximos Passos
 
-1. Aprovar estratégia de integração com stakeholders
-2. Criar chaves de API nas plataformas wearables
-3. Implementar estrutura de dados
-4. Desenvolver connectors OAuth
-5. Testar pipeline end-to-end
-6. Integrar com modelos preditivos
+1. Consolidar checklist de pronto para integração wearable MVP (fluxo, observabilidade e testes).
+2. Expandir cobertura de features comportamentais para uso consistente em scoring/recomendação.
+3. Evoluir integração com modelos preditivos reais em runtime.
+4. Definir estratégia de hardening cloud (Key Vault, anonimização dedicada e monitoramento avançado).
 
 ---
 
