@@ -37,3 +37,58 @@ services:
       ETL_INTERVAL_SECONDS: "86400"
       ETL_ENABLE_LOOP: "false"
     restart: on-failure
+
+  ml-inference-service:
+    build:
+      context: ./modules/ml/smart-triage-health/ml_service
+    container_name: ml-inference-service
+    ports:
+      - "8001:8001"
+    environment:
+      MODEL_PATH: /app/models/model.pkl
+      PREPROCESSOR_PATH: /app/models/preprocessor.pkl
+    volumes:
+      - ./modules/ml/smart-triage-health/ml_service/models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  risk-scoring-engine:
+    build:
+      context: ./modules/services/risk-scoring-engine
+    container_name: risk-scoring-engine
+    ports:
+      - "8004:8004"
+    environment:
+      ML_SERVICE_URL: http://ml-inference-service:8001
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/care_plus
+    depends_on:
+      db:
+        condition: service_healthy
+      ml-inference-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  recommendation-engine:
+    build:
+      context: ./modules/services/recommendation-engine
+    container_name: recommendation-engine
+    ports:
+      - "8005:8005"
+    depends_on:
+      risk-scoring-engine:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
